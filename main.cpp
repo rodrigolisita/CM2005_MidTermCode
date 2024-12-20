@@ -1,7 +1,11 @@
 #include <iostream>
+#include "Data.h"
+
 
 int main(){
-    std::cout << "Hello World" << std::endl;
+    
+    Data app{};
+    app.init();
 
     return 0;
 }
