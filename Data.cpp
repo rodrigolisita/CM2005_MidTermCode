@@ -24,10 +24,11 @@ void Data::loadData()
     std::vector<std::string> tokensTime;
 
     int year;
-    double AT;
-    double BE;
-    double BG;
-    double CH;
+    //double AT;
+    //double BE;
+    //double BG;
+    //double CH;
+    std::map<std::string, double> countryTemperatures;
 
     if(csvFile.is_open())
     {
@@ -46,19 +47,24 @@ void Data::loadData()
             
             try{
                 year = std::stoi(tokensTime[0]);
-                AT = std::stod(tokens[1]);
-                BE = std::stod(tokens[2]);
-                BG = std::stod(tokens[3]);
-                CH = std::stod(tokens[4]);
+                countryTemperatures["AT"] = std::stod(tokens[1]); 
+                countryTemperatures["BE"] = std::stod(tokens[2]); 
+                countryTemperatures["BG"] = std::stod(tokens[3]); 
+                countryTemperatures["CH"] = std::stod(tokens[4]);
+                //AT = std::stod(tokens[1]);
+                //BE = std::stod(tokens[2]);
+                //BG = std::stod(tokens[3]);
+                //CH = std::stod(tokens[4]);
 
                
                 data.push_back(TemperatureData{
                                                 tokens[0],
                                                 year,
-                                                AT,
-                                                BE,
-                                                BG,
-                                                CH
+                                                countryTemperatures 
+                                                //AT,
+                                                //BE,
+                                                //BG,
+                                                //CH
                                               }
                 );
 
@@ -87,25 +93,19 @@ void Data::computeStats()
     std::cout << "Statistics from the data." << std::endl;
     std::cout << "===========================" << std::endl;
 
-    printData();
+    //printData();
     averageTemperatureForEachCountry();
 }
 
 void Data::printData()
 {
 
-    int i; 
-    for (i = static_cast<int>(TemperatureData::Country::AT); i <=static_cast<int>(TemperatureData::Country::CH); i++){
-        std::cout << i << " ";
-        switch (static_cast<TemperatureData::Country>(i)) {
-            case TemperatureData::Country::AT: std::cout << "AT"; break;
-            case TemperatureData::Country::BE: std::cout << "BE"; break;
-            case TemperatureData::Country::BG: std::cout << "BG"; break;
-            case TemperatureData::Country::CH: std::cout << "CH"; break;
-            // Add more cases for other countries as needed
+    for (const auto& countryPair : data[0].countryTemperatures) 
+    {
+        for (const auto& line : data) 
+        {
+            std::cout << "Year: " << line.year << ". Country: "<< countryPair.first << std::endl;
         }
-
-        std::cout << std::endl;
     }
 
 //    for (const auto& line : data){
@@ -116,26 +116,22 @@ void Data::printData()
 //    }
 }
 
-void Data::averageTemperatureForEachCountry()
-{
+void Data::averageTemperatureForEachCountry() {
     std::cout << "===========================" << std::endl;
     std::cout << "Average Temperatures for Each Country" << std::endl;
     std::cout << "===========================" << std::endl;
 
+// Calculate average temperature for each country in the map
+    for (const auto& countryPair : data[0].countryTemperatures) { // Assuming all data points have the same countries
+        double sum = 0;
+        for (const auto& line : data) {
+            sum += line.countryTemperatures.at(countryPair.first); 
+        }
 
+        double average = sum / data.size();
+        std::cout << "Average temperature for country " 
+                  << countryPair.first  // Print the country code (key in the map)
+                  << ": " << average << std::endl;
+    }
     
-    
-    
-    
-    
-    
-
-    
-    
- 
- 
-    
-    
-}    
-
-
+}
