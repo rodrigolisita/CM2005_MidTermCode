@@ -8,6 +8,7 @@
 class Data
 {
     public:
+        
         Data() = default;
         void init();
          void computeStats();
@@ -15,5 +16,6 @@ class Data
         void loadData();
         std::vector<TemperatureData> data;
         void printData();
+        void averageTemperatureForEachCountry();
 
 };

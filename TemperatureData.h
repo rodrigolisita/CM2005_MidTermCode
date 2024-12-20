@@ -1,10 +1,12 @@
 #pragma once
 
 #include <string>
+#include <vector>
 
 class TemperatureData
 {
     public:
+        enum class Country { AT, BE, BG, CH };
         TemperatureData(std::string _timestamp,
         int _year,
         double _AT,

@@ -2,8 +2,8 @@
 #include <fstream>
 #include <sstream> // For std::stringstream
 #include <algorithm>
-#include <unordered_map> 
-
+#include <unordered_map>
+#include <numeric> // For std::accumulate 
 
 #include "Data.h"
 #include "tokenize.h"
@@ -88,14 +88,54 @@ void Data::computeStats()
     std::cout << "===========================" << std::endl;
 
     printData();
+    averageTemperatureForEachCountry();
 }
 
 void Data::printData()
 {
-    for (const auto& line : data){
-        std::cout << "Year: " << line.year << ". Country AT: " << line.AT << std::endl;
+
+    int i; 
+    for (i = static_cast<int>(TemperatureData::Country::AT); i <=static_cast<int>(TemperatureData::Country::CH); i++){
+        std::cout << i << " ";
+        switch (static_cast<TemperatureData::Country>(i)) {
+            case TemperatureData::Country::AT: std::cout << "AT"; break;
+            case TemperatureData::Country::BE: std::cout << "BE"; break;
+            case TemperatureData::Country::BG: std::cout << "BG"; break;
+            case TemperatureData::Country::CH: std::cout << "CH"; break;
+            // Add more cases for other countries as needed
+        }
+
+        std::cout << std::endl;
     }
+
+//    for (const auto& line : data){
+//        //std::cout << "Year: " << line.year << ". Country AT: " << line.AT << std::endl;
+//        std::cout << "Year: " << line.year << ". AT: "<< line.AT << std::endl;
+//        // Loop through each country in the enum
+        
+//    }
 }
+
+void Data::averageTemperatureForEachCountry()
+{
+    std::cout << "===========================" << std::endl;
+    std::cout << "Average Temperatures for Each Country" << std::endl;
+    std::cout << "===========================" << std::endl;
+
+
     
+    
+    
+    
+    
+    
+
+    
+    
+ 
+ 
+    
+    
+}    
 
 

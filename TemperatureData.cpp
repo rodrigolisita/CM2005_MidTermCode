@@ -1,4 +1,5 @@
 #include "TemperatureData.h"
+#include <vector>
 
 TemperatureData::TemperatureData(std::string _timestamp,
                                 int _year,
