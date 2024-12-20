@@ -24,10 +24,6 @@ void Data::loadData()
     std::vector<std::string> tokensTime;
 
     int year;
-    //double AT;
-    //double BE;
-    //double BG;
-    //double CH;
     std::map<std::string, double> countryTemperatures;
 
     if(csvFile.is_open())
@@ -51,20 +47,10 @@ void Data::loadData()
                 countryTemperatures["BE"] = std::stod(tokens[2]); 
                 countryTemperatures["BG"] = std::stod(tokens[3]); 
                 countryTemperatures["CH"] = std::stod(tokens[4]);
-                //AT = std::stod(tokens[1]);
-                //BE = std::stod(tokens[2]);
-                //BG = std::stod(tokens[3]);
-                //CH = std::stod(tokens[4]);
-
-               
                 data.push_back(TemperatureData{
                                                 tokens[0],
                                                 year,
-                                                countryTemperatures 
-                                                //AT,
-                                                //BE,
-                                                //BG,
-                                                //CH
+                                                countryTemperatures
                                               }
                 );
 
