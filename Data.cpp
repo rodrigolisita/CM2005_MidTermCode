@@ -13,6 +13,7 @@ void Data::init()
     std::cout << "Hello World from data class" << std::endl;
     loadData();
     computeStats();
+    computeCandlesticks();
 
 }
 
@@ -120,4 +121,57 @@ void Data::averageTemperatureForEachCountry() {
                   << ": " << average << std::endl;
     }
     
+}
+
+void Data::computeCandlesticks() {
+    std::map<std::string, std::map<int, Candlestick>> candlesticks; // Country -> Year -> Candlestick
+    
+    // Get the list of countries from the first data point
+    const std::map<std::string, double>& countries = data[0].countryTemperatures; 
+
+    // Loop through countries
+    for (const auto& countryPair : countries) {
+        std::string country = countryPair.first;
+        int currentYear = -1; // Initialize with an invalid year
+
+        // Loop through years (from the data)
+        for (const auto& line : data) {
+            int year = line.year;
+            double temperature = line.countryTemperatures.at(country);
+
+            if(year != currentYear){
+                //New year detected
+                currentYear = year;
+
+                //Initialize a new candlestick for this year
+                candlesticks[country][year] = Candlestick(country, temperature, temperature, temperature, temperature);
+            } else {
+                // same year, update the close value
+                candlesticks[country][year].close = temperature;
+
+                // Update high and low
+                candlesticks[country][year].high = std::max(candlesticks[country][year].high, temperature);
+                candlesticks[country][year].low  = std::min(candlesticks[country][year].low,  temperature); 
+
+            }
+        }
+    }
+
+
+// Print the candlesticks for each country
+    for (const auto& countryPair : candlesticks) {
+        std::cout << "Country: " << countryPair.first << std::endl;
+
+        for (const auto& yearPair : countryPair.second) {
+            int year = yearPair.first;
+            const Candlestick& candle = yearPair.second;
+
+            std::cout << "  Year: " << year
+                      << ", Open: " << candle.open
+                      << ", High: " << candle.high
+                      << ", Low: " << candle.low
+                      << ", Close: " << candle.close << std::endl;
+        }
+    }
+
 }
