@@ -23,6 +23,7 @@ void Data::loadData()
     std::vector<std::string> tokens;
     std::vector<std::string> tokensTime;
 
+    int year;
     double AT;
     double BE;
     double BG;
@@ -36,8 +37,7 @@ void Data::loadData()
             //std::cout << "Read line " << line << std::endl;
             tokens = tokenise(line, ',');
             tokensTime = tokenise(tokens[0], '-');
-            std::cout << tokens[0] << " " << tokensTime[0] << std::endl;
-
+            
             if(tokens.size() != 29 ) // bad line
             {
                 //std::cout << "Bad line " << std::endl;
@@ -45,7 +45,7 @@ void Data::loadData()
             }
             
             try{
-                
+                year = std::stoi(tokensTime[0]);
                 AT = std::stod(tokens[1]);
                 BE = std::stod(tokens[2]);
                 BG = std::stod(tokens[3]);
@@ -53,7 +53,8 @@ void Data::loadData()
 
                
                 data.push_back(TemperatureData{
-                                                tokensTime[0],
+                                                tokens[0],
+                                                year,
                                                 AT,
                                                 BE,
                                                 BG,
@@ -62,6 +63,7 @@ void Data::loadData()
                 );
 
             }catch(std::exception& e){
+                std::cout << "Bad int! " << tokensTime[0] << std::endl;
                 std::cout << "Bad double! " << tokens[1] << std::endl;
                 std::cout << "Bad double! " << tokens[2] << std::endl;
                 std::cout << "Bad double! " << tokens[3] << std::endl;
@@ -91,7 +93,7 @@ void Data::computeStats()
 void Data::printData()
 {
     for (const auto& line : data){
-        std::cout << line.timestamp << ". AT: " << line.AT << std::endl;
+        std::cout << "Year: " << line.year << ". Country AT: " << line.AT << std::endl;
     }
 }
     
