@@ -23,6 +23,7 @@ class Data
         std::map<std::string, std::map<int, Candlestick>> candlesticks; // Declare candlesticks as a member variable
 
         void computeCandlesticks(); // Function to calculate candlesticks
+        void printCandleStickData(const std::map<std::string, std::map<int, Candlestick>>& candlesticks);
         void printCandlestickChart(const std::map<std::string, std::map<int, Candlestick>>& candlesticks); 
 
         

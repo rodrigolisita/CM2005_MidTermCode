@@ -24,35 +24,39 @@ void Data::printMenu() {
 
     do {
         std::cout << "\nWeather data MENU. Choose option" << std::endl;
-        std::cout << "1: Print Candlestick" << std::endl;
-        std::cout << "2: Compute data statistics" << std::endl; // Changed to "Exit" for clarity
-        std::cout << "3: Print Available Countries" << std::endl; // Changed to "Exit" for clarity
-        std::cout << "4: Exit" << std::endl; // Changed to "Exit" for clarity
+        std::cout << "1: Print Candlestick data" << std::endl;
+        std::cout << "2: Print Candlestick Chart" << std::endl;
+        std::cout << "3: Compute data statistics" << std::endl; // Changed to "Exit" for clarity
+        std::cout << "4: Print Available Countries" << std::endl; // Changed to "Exit" for clarity
+        std::cout << "5: Exit" << std::endl; // Changed to "Exit" for clarity
         std::cout << "Enter your choice: ";
         std::cin >> choice;
 
-        if (std::cin.fail() || choice < 1 || choice > 4) {
+        if (std::cin.fail() || choice < 1 || choice > 5) {
             std::cout << "Invalid input. Please enter valid number." << std::endl;
             std::cin.clear();  // Clear error flags
             std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n'); // Discard invalid input
         } else {
             switch (choice) {
                 case 1:
+                    printCandleStickData(candlesticks);
+                    break;
+                case 2:
                     //computeCandlesticks();
                     printCandlestickChart(candlesticks);
                     break;
-                case 2:
+                case 3:
                     computeStats();    
                     break;
-                case 3:
+                case 4:
                     printData();    
                     break;
-                case 4:
+                case 5:
                     std::cout << "Exiting program." << std::endl;
                     break;
             }
         }
-    } while (choice != 4); 
+    } while (choice != 5); 
 }
 
 void Data::loadData()
@@ -218,17 +222,8 @@ void Data::computeCandlesticks() {
 
 }
 
-void Data::printCandlestickChart(const std::map<std::string, std::map<int, Candlestick>>& candlesticks) {
-
-    if (candlesticks.empty() || candlesticks.begin()->second.empty()) {
-        std::cout << "No candlestick data to display." << std::endl;
-        return;
-    }
-
-    int chartHeight = 30;
-    int barWidth = 6;
-
-    // Print the list of available countries
+std::string getCountry(const std::map<std::string, std::map<int, Candlestick>>& candlesticks){
+     // Print the list of available countries
     std::cout << "\nAvailable countries:" << std::endl;
     int countryIndex = 1; // Start indexing from 1 for user-friendliness
     std::map<int, std::string> countryMap; // To map user input to country codes
@@ -250,11 +245,102 @@ void Data::printCandlestickChart(const std::map<std::string, std::map<int, Candl
         std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
         std::cin >> selectedIndex;
     }
+    std::cout << "Selected country: " << countryMap.at(selectedIndex) << std::endl;
+    return countryMap.at(selectedIndex);
 
-    // Set the selectedCountry variable
-    std::string selectedCountry = countryMap.at(selectedIndex);
+}
 
-    std::cout << "Selected country: " << selectedCountry << std::endl;
+void Data::printCandleStickData(const std::map<std::string, std::map<int, Candlestick>>& candlesticks){
+    if (candlesticks.empty() || candlesticks.begin()->second.empty()) {
+        std::cout << "No candlestick data to display." << std::endl;
+        return;
+    }
+
+    // Get the selectedCountry variable
+    std::string selectedCountry = getCountry(candlesticks);
+    const auto& countryData = candlesticks.at(selectedCountry);
+
+    std::cout << "***************************** " << std::endl; 
+    std::cout << "Candlestick data for Country: " << selectedCountry << std::endl; 
+    std::cout << "***************************** " << std::endl; 
+
+    int maxColumnWidth = 8;
+
+    // year in rows
+    //std::cout << std::setw(maxColumnWidth) << std::left << "Year" << " Open " << "Close " << "High " << "Low" << std::endl; 
+    std::cout << std::setw(maxColumnWidth) << std::left << "Year" << 
+        std::setw(maxColumnWidth) << std::left << "Open  " <<
+        std::setw(maxColumnWidth) << std::left << "Close  " <<
+        std::setw(maxColumnWidth) << std::left << "High  " <<
+        std::setw(maxColumnWidth) << std::left << "Low  " <<
+        std::endl;
+    for(const auto& yearPair : countryData){
+        int year = yearPair.first;
+        const Candlestick& candle = yearPair.second;
+        std::cout << std::setw(maxColumnWidth) << std::left << std::fixed << std::setprecision(3)<< year << " ";
+        std::cout << std::setw(maxColumnWidth) << std::left << std::fixed << std::setprecision(3)<< candle.open << " ";
+        std::cout << std::setw(maxColumnWidth) << std::left << std::fixed << std::setprecision(3)<< candle.close << " ";
+        std::cout << std::setw(maxColumnWidth) << std::left << std::fixed << std::setprecision(3)<< candle.high << " ";
+        std::cout << std::setw(maxColumnWidth) << std::left << std::fixed << std::setprecision(3)<< candle.low << " ";
+        std::cout << std::endl;
+    }
+    std::cout << std::endl;    
+
+    // year in columns
+    std::cout << std::setw(maxColumnWidth) << std::left << "Year"; 
+    for(const auto& yearPair : countryData){
+        int year = yearPair.first;
+        const Candlestick& candle = yearPair.second;
+        std::cout << std::setw(maxColumnWidth) << std::left << std::fixed << std::setprecision(3)<< year << " ";
+    }
+    std::cout << std::endl;
+
+     // Print the open values with adjusted width */
+     std::cout << std::setw(maxColumnWidth) <<std::left << "Open "; 
+     for(const auto& yearPair : countryData){
+         const Candlestick& candle = yearPair.second;
+         std::cout << std::setw(maxColumnWidth) << candle.open << " ";
+     }
+     std::cout << std::endl;
+     // Print the close values with adjusted width
+     std::cout << std::setw(maxColumnWidth) <<std::left << "Close ";
+     for(const auto& yearPair : countryData){
+         const Candlestick& candle = yearPair.second;
+         std::cout << std::setw(maxColumnWidth) << candle.close << " ";
+     }
+     std::cout << std::endl;
+     // Print the High values with adjusted width
+     std::cout << std::setw(maxColumnWidth) <<std::left << "High ";
+     for(const auto& yearPair : countryData){
+         const Candlestick& candle = yearPair.second;
+         std::cout << std::setw(maxColumnWidth) << candle.high << " ";
+     }
+     std::cout << std::endl;
+     // Print the Low values with adjusted width
+     std::cout << std::setw(maxColumnWidth) <<std::left << "Low ";
+     for(const auto& yearPair : countryData){
+         const Candlestick& candle = yearPair.second;
+         std::cout << std::setw(maxColumnWidth) << candle.low << " ";
+     }
+     std::cout << std::endl;
+  std::cout << "----------------------------------" << std::endl;
+
+
+}
+
+void Data::printCandlestickChart(const std::map<std::string, std::map<int, Candlestick>>& candlesticks) {
+
+    if (candlesticks.empty() || candlesticks.begin()->second.empty()) {
+        std::cout << "No candlestick data to display." << std::endl;
+        return;
+    }
+
+    int chartHeight = 30;
+    int barWidth = 6;
+
+    // Get the selectedCountry variable
+    std::string selectedCountry = getCountry(candlesticks);
+    
 
 
 
@@ -262,7 +348,7 @@ void Data::printCandlestickChart(const std::map<std::string, std::map<int, Candl
     //std::string selectedCountry = "BE"; 
 
     std::cout << "***************************** " << std::endl; 
-    std::cout << "Candlestick data for Country: " << selectedCountry << std::endl; 
+    std::cout << "Candlestick chart for Country: " << selectedCountry << std::endl; 
     std::cout << "***************************** " << std::endl; 
 
     // Get the candlestick data for the selected country
