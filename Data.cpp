@@ -10,7 +10,7 @@
 
 void Data::init()
 {
-    std::cout << "Hello World from data class" << std::endl;
+    std::cout << "Hello from Weather data EU 1980-2019" << std::endl;
     loadData();
     computeStats();
     computeCandlesticks();
@@ -187,7 +187,11 @@ void Data::printCandlestickChart(const std::map<std::string, std::map<int, Candl
     int barWidth = 5;
 
     // Select the first country ("AT")
-    std::string selectedCountry = "AT"; 
+    std::string selectedCountry = "BE"; 
+
+    std::cout << "***************************** " << std::endl; 
+    std::cout << "Candlestick data for Country: " << selectedCountry << std::endl; 
+    std::cout << "***************************** " << std::endl; 
 
     // Get the candlestick data for the selected country
     const auto& countryData = candlesticks.at(selectedCountry);
@@ -227,38 +231,41 @@ void Data::printCandlestickChart(const std::map<std::string, std::map<int, Candl
     std::cout << std::endl;
     
     
-    // Print the open values with adjusted width
-    std::cout << std::setw(maxColumnWidth) <<std::left << "Open "; 
+/*     // Print the open values with adjusted width */
+/*     std::cout << std::setw(maxColumnWidth) <<std::left << "Open ";  */
+/*     for(const auto& yearPair : countryData){ */
+/*         const Candlestick& candle = yearPair.second; */
+/*         std::cout << std::setw(maxColumnWidth) << candle.open << " "; */
+/*     } */
+/*     std::cout << std::endl; */
+/*     // Print the close values with adjusted width */
+/*     std::cout << std::setw(maxColumnWidth) <<std::left << "Close ";  */
+/*     for(const auto& yearPair : countryData){ */
+/*         const Candlestick& candle = yearPair.second; */
+/*         std::cout << std::setw(maxColumnWidth) << candle.close << " "; */
+/*     } */
+/*     std::cout << std::endl; */
+/*     // Print the High values with adjusted width */
+/*     std::cout << std::setw(maxColumnWidth) <<std::left << "High ";  */
+/*     for(const auto& yearPair : countryData){ */
+/*         const Candlestick& candle = yearPair.second; */
+/*         std::cout << std::setw(maxColumnWidth) << candle.high << " "; */
+/*     } */
+/*     std::cout << std::endl; */
+/*     // Print the Low values with adjusted width */
+/*     std::cout << std::setw(maxColumnWidth) <<std::left << "Low ";  */
+/*     for(const auto& yearPair : countryData){ */
+/*         const Candlestick& candle = yearPair.second; */
+/*         std::cout << std::setw(maxColumnWidth) << candle.low << " "; */
+/*     } */
+/*     std::cout << std::endl; */
+    //std::cout << "----------------------------------" << std::endl;
+    // Print "Year" below the y-axis values
+    std::cout << std::setw(maxColumnWidth) << std::left << "--------" << " |"; 
     for(const auto& yearPair : countryData){
-        const Candlestick& candle = yearPair.second;
-        std::cout << std::setw(maxColumnWidth) << candle.open << " ";
+        std::cout << std::setw(maxColumnWidth) << std::left << "---------";
     }
     std::cout << std::endl;
-
-    // Print the close values with adjusted width
-    std::cout << std::setw(maxColumnWidth) <<std::left << "Close "; 
-    for(const auto& yearPair : countryData){
-        const Candlestick& candle = yearPair.second;
-        std::cout << std::setw(maxColumnWidth) << candle.close << " ";
-    }
-    std::cout << std::endl;
-
-    // Print the High values with adjusted width
-    std::cout << std::setw(maxColumnWidth) <<std::left << "High "; 
-    for(const auto& yearPair : countryData){
-        const Candlestick& candle = yearPair.second;
-        std::cout << std::setw(maxColumnWidth) << candle.high << " ";
-    }
-    std::cout << std::endl;
-
-    // Print the Low values with adjusted width
-    std::cout << std::setw(maxColumnWidth) <<std::left << "Low "; 
-    for(const auto& yearPair : countryData){
-        const Candlestick& candle = yearPair.second;
-        std::cout << std::setw(maxColumnWidth) << candle.low << " ";
-    }
-    std::cout << std::endl;
-    std::cout << "----------------------------------" << std::endl;
 
     // Add a margin to the high and low values for the y-axis range
     double margin = 0.1 * countryRange; // 10% margin
