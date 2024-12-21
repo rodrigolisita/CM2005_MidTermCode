@@ -20,5 +20,8 @@ class Data
         void averageTemperatureForEachCountry();
         std::map<int, std::vector<Candlestick>> yearlyCandlesticks; // Store candlesticks for each year
         void computeCandlesticks(); // Function to calculate candlesticks
+        void printCandlestickChart(const std::map<std::string, std::map<int, Candlestick>>& candlesticks); 
+
+        
 
 };
