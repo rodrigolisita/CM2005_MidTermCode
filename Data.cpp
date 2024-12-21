@@ -12,10 +12,47 @@ void Data::init()
 {
     std::cout << "Hello from Weather data EU 1980-2019" << std::endl;
     loadData();
-    computeStats();
     computeCandlesticks();
+    printMenu();
+    
     
 
+}
+
+void Data::printMenu() {
+    int choice;
+
+    do {
+        std::cout << "\nWeather data MENU. Choose option" << std::endl;
+        std::cout << "1: Print Candlestick" << std::endl;
+        std::cout << "2: Compute data statistics" << std::endl; // Changed to "Exit" for clarity
+        std::cout << "3: Print Available Countries" << std::endl; // Changed to "Exit" for clarity
+        std::cout << "4: Exit" << std::endl; // Changed to "Exit" for clarity
+        std::cout << "Enter your choice: ";
+        std::cin >> choice;
+
+        if (std::cin.fail() || choice < 1 || choice > 4) {
+            std::cout << "Invalid input. Please enter valid number." << std::endl;
+            std::cin.clear();  // Clear error flags
+            std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n'); // Discard invalid input
+        } else {
+            switch (choice) {
+                case 1:
+                    //computeCandlesticks();
+                    printCandlestickChart(candlesticks);
+                    break;
+                case 2:
+                    computeStats();    
+                    break;
+                case 3:
+                    printData();    
+                    break;
+                case 4:
+                    std::cout << "Exiting program." << std::endl;
+                    break;
+            }
+        }
+    } while (choice != 4); 
 }
 
 void Data::loadData()
@@ -30,7 +67,7 @@ void Data::loadData()
 
     if(csvFile.is_open())
     {
-        std::cout << "File open " << std::endl;
+        std::cout << "Opening file ... " << std::endl;
         while(std::getline(csvFile, line))
         {
             //std::cout << "Read line " << line << std::endl;
@@ -88,20 +125,24 @@ void Data::computeStats()
 void Data::printData()
 {
 
-    for (const auto& countryPair : data[0].countryTemperatures) 
-    {
-        for (const auto& line : data) 
-        {
-            std::cout << "Year: " << line.year << ". Country: "<< countryPair.first << std::endl;
-        }
-    }
+    std::cout << "\nAvailable countries:" << std::endl;
 
-//    for (const auto& line : data){
-//        //std::cout << "Year: " << line.year << ". Country AT: " << line.AT << std::endl;
-//        std::cout << "Year: " << line.year << ". AT: "<< line.AT << std::endl;
-//        // Loop through each country in the enum
-        
+                // Get the list of countries from the first data point
+                const std::map<std::string, double>& countries = data[0].countryTemperatures;
+
+                for (const auto& countryPair : countries) {
+                    std::cout << "- " << countryPair.first << std::endl;
+                }
+
+//    for (const auto& countryPair : data[0].countryTemperatures) 
+//    {
+//        for (const auto& line : data) 
+//        {
+//            std::cout << "Year: " << line.year << ". Country: "<< countryPair.first << std::endl;
+//        }
 //    }
+
+    
 }
 
 void Data::averageTemperatureForEachCountry() {
@@ -125,7 +166,8 @@ void Data::averageTemperatureForEachCountry() {
 }
 
 void Data::computeCandlesticks() {
-    std::map<std::string, std::map<int, Candlestick>> candlesticks; // Country -> Year -> Candlestick
+    
+    //std::map<std::string, std::map<int, Candlestick>> candlesticks; // Country -> Year -> Candlestick
     
     // Get the list of countries from the first data point
     const std::map<std::string, double>& countries = data[0].countryTemperatures; 
@@ -158,7 +200,7 @@ void Data::computeCandlesticks() {
         }
     }
 
-   printCandlestickChart(candlesticks);
+   //printCandlestickChart(candlesticks);
 
     // Print the candlesticks for each country
 //        for (const auto& countryPair : candlesticks) {
@@ -184,10 +226,40 @@ void Data::printCandlestickChart(const std::map<std::string, std::map<int, Candl
     }
 
     int chartHeight = 30;
-    int barWidth = 5;
+    int barWidth = 6;
+
+    // Print the list of available countries
+    std::cout << "\nAvailable countries:" << std::endl;
+    int countryIndex = 1; // Start indexing from 1 for user-friendliness
+    std::map<int, std::string> countryMap; // To map user input to country codes
+    for (const auto& countryPair : candlesticks) {
+        std::cout << countryIndex << ": " << countryPair.first << std::endl;
+        countryMap[countryIndex] = countryPair.first;
+        countryIndex++;
+    }
+
+    // Get country selection from user
+    int selectedIndex;
+    std::cout << "Enter the number for your selected country: ";
+    std::cin >> selectedIndex;
+
+    // Input validation (check if the input is a number and within the valid range)
+    while (std::cin.fail() || selectedIndex < 1 || selectedIndex >= countryIndex) {
+        std::cout << "Invalid input. Please enter a number from the list: ";
+        std::cin.clear();
+        std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+        std::cin >> selectedIndex;
+    }
+
+    // Set the selectedCountry variable
+    std::string selectedCountry = countryMap.at(selectedIndex);
+
+    std::cout << "Selected country: " << selectedCountry << std::endl;
+
+
 
     // Select the first country ("AT")
-    std::string selectedCountry = "BE"; 
+    //std::string selectedCountry = "BE"; 
 
     std::cout << "***************************** " << std::endl; 
     std::cout << "Candlestick data for Country: " << selectedCountry << std::endl; 
@@ -226,7 +298,7 @@ void Data::printCandlestickChart(const std::map<std::string, std::map<int, Candl
     std::cout << std::setw(maxColumnWidth) << std::left << "" << " "; 
     for(const auto& yearPair : countryData){
         int year = yearPair.first;
-        std::cout << std::setw(maxColumnWidth) << std::left << year << " ";
+        std::cout << std::setw(maxColumnWidth) << std::left << std::fixed << std::setprecision(3)<< year << " ";
     }
     std::cout << std::endl;
     
