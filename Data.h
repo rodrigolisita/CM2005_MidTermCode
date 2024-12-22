@@ -9,7 +9,6 @@
 class Data
 {
     public:
-        
         Data() = default;
         void init();
          void computeStats();
@@ -30,6 +29,10 @@ class Data
         void printCandlestickChart(const std::map<std::string, std::map<int, Candlestick>>& candlesticks); 
         
 
-        
+        // ANSI color codes (you can add more as needed)
+        const std::string colorRed = "\033[31m";
+        const std::string colorGreen = "\033[32m";
+        const std::string colorBlue = "\033[34m";
+        const std::string colorReset = "\033[0m"; 
 
 };

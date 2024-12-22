@@ -26,8 +26,7 @@ void Data::init()
         processUserOption(input);
     }
     
-    
-
+   
 }
 
 void Data::printMenu() {
@@ -73,7 +72,8 @@ void Data::processUserOption(const int& userOption) {
             printData();
             break;
         case 5:
-            printMenu();
+            std::cout << "Exiting program." << std::endl;
+            std::exit(0); // Terminate the program
             break;
         default:
             std::cout << "Invalid option selected." << std::endl;
@@ -358,16 +358,11 @@ void Data::printCandlestickChart(const std::map<std::string, std::map<int, Candl
 
     int chartHeight = 30;
     int barWidth = 6;
+    std::string colorOption;
 
     // Get the selectedCountry variable
     std::string selectedCountry = getCountry(candlesticks);
     
-
-
-
-    // Select the first country ("AT")
-    //std::string selectedCountry = "BE"; 
-
     std::cout << "***************************** " << std::endl; 
     std::cout << "Candlestick chart for Country: " << selectedCountry << std::endl; 
     std::cout << "***************************** " << std::endl; 
@@ -469,13 +464,19 @@ void Data::printCandlestickChart(const std::map<std::string, std::map<int, Candl
             double realBodyLow = std::min(candle.open,candle.close);
             double high = candle.high; // Get the high value
             double low = candle.low; // Get the low value
-          
+
+            //colorOption = colorRed; // Choose the color you want to use
+            // Set colorOption based on open/close comparison
+            colorOption = (candle.close > candle.open) ? colorGreen : colorRed;
+
+
+
             if (open <= tempValue && open > tempValueL) {
             // Print "U" or "D" if open value falls within the current row's range
-                std::cout << std::setw(maxColumnWidth) << std::left << (open > close ? "O" : "O") << " "; 
+                std::cout << colorOption << std::setw(maxColumnWidth) << std::left << (open > close ? "O" : "O") << " " << colorReset; 
             } else if (close >= tempValueL && close < tempValue) {
             // Print "U" or "D" if close value falls within the current row's range
-                std::cout << std::setw(maxColumnWidth) << std::left << (open > close ? "C" : "C") << " "; 
+                std::cout << colorOption << std::setw(maxColumnWidth) << std::left << (open > close ? "C" : "C") << " " << colorReset; 
             //}
             //if(realBodyHigh <=tempValue && realBodyHigh>tempValueL){
             //    std::cout << std::setw(maxColumnWidth) << std::left << realBodyHigh << " ";
@@ -484,16 +485,16 @@ void Data::printCandlestickChart(const std::map<std::string, std::map<int, Candl
             //    std::cout << std::setw(maxColumnWidth) << std::left << realBodyLow << " ";
             }else if (high >= tempValue && realBodyHigh < tempValue) { 
                 // Print "|" if high value falls within the current row's range
-                std::cout << std::setw(maxColumnWidth) << std::left << "|" << " "; 
+                std::cout << colorOption << std::setw(maxColumnWidth) << std::left << "|" << " " << colorReset; 
             }else if (low <= tempValue && realBodyLow > tempValueL) { 
                 // Print "|" if low value falls within the current row's range
-               std::cout << std::setw(maxColumnWidth) << std::left << "|" << " "; 
+               std::cout << colorOption << std::setw(maxColumnWidth) << std::left << "|" << " " << colorReset; 
             }else if (tempValue >= std::min(open, close) && tempValueL <= std::max(open, close)) {
             // Print "*" if the current row is between the open and close values
-            std::cout << std::setw(maxColumnWidth) << std::left << "*" << " "; 
+            std::cout << colorOption << std::setw(maxColumnWidth) << std::left << "*" << " " << colorReset; 
             }else {
                 //Print blank space to maintain alignment
-                std::cout << std::setw(maxColumnWidth) << std::left << "" << " "; 
+                std::cout << colorOption << std::setw(maxColumnWidth) << std::left << "" << " " << colorReset; 
             }
         }
         std::cout << std::endl;
