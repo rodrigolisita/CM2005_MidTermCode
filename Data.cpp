@@ -8,55 +8,76 @@
 #include "Data.h"
 #include "tokenize.h"
 
+#include <map>      // Include the map header
+#include <functional>
+
 void Data::init()
 {
     std::cout << "Hello from Weather data EU 1980-2019" << std::endl;
     loadData();
     computeCandlesticks();
-    printMenu();
+    //printMenu();
+    
+    int input;
+    while(true)
+    {
+        printMenu();
+        input = getUserOption();
+        processUserOption(input);
+    }
     
     
 
 }
 
 void Data::printMenu() {
-    int choice;
+    std::cout << "\nWeather data MENU. Choose option" << std::endl;
+    std::cout << "1: Print Candlestick data" << std::endl;
+    std::cout << "2: Print Candlestick Chart" << std::endl;
+    std::cout << "3: Compute data statistics" << std::endl;
+    std::cout << "4: Print Available Countries" << std::endl;
+    std::cout << "5: Exit" << std::endl;
+}
 
-    do {
-        std::cout << "\nWeather data MENU. Choose option" << std::endl;
-        std::cout << "1: Print Candlestick data" << std::endl;
-        std::cout << "2: Print Candlestick Chart" << std::endl;
-        std::cout << "3: Compute data statistics" << std::endl; // Changed to "Exit" for clarity
-        std::cout << "4: Print Available Countries" << std::endl; // Changed to "Exit" for clarity
-        std::cout << "5: Exit" << std::endl; // Changed to "Exit" for clarity
-        std::cout << "Enter your choice: ";
-        std::cin >> choice;
 
-        if (std::cin.fail() || choice < 1 || choice > 5) {
-            std::cout << "Invalid input. Please enter valid number." << std::endl;
-            std::cin.clear();  // Clear error flags
-            std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n'); // Discard invalid input
-        } else {
-            switch (choice) {
-                case 1:
-                    printCandleStickData(candlesticks);
-                    break;
-                case 2:
-                    //computeCandlesticks();
-                    printCandlestickChart(candlesticks);
-                    break;
-                case 3:
-                    computeStats();    
-                    break;
-                case 4:
-                    printData();    
-                    break;
-                case 5:
-                    std::cout << "Exiting program." << std::endl;
-                    break;
-            }
-        }
-    } while (choice != 5); 
+int Data::getUserOption() {
+    int userOption;
+
+    std::cout << "Enter your choice: ";
+    std::cin >> userOption;
+
+    // Input validation 
+    while (std::cin.fail() || userOption < 1 || userOption > maxMenuOptions) { 
+        std::cout << "Invalid input. Please enter a number between 1 and 5: ";
+        std::cin.clear();  // Clear error flags
+        std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n'); // Discard invalid input
+        std::cin >> userOption;
+    }
+
+    return userOption;
+}
+
+/** Process user option */ 
+void Data::processUserOption(const int& userOption) {
+    switch (userOption) {
+        case 1:
+            printCandleStickData(candlesticks);
+            break;
+        case 2:
+            printCandlestickChart(candlesticks); // Assuming candlesticks is a member variable
+            break;
+        case 3:
+            computeStats();
+            break;
+        case 4:
+            printData();
+            break;
+        case 5:
+            printMenu();
+            break;
+        default:
+            std::cout << "Invalid option selected." << std::endl;
+    }
 }
 
 void Data::loadData()
