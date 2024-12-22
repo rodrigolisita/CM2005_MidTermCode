@@ -35,7 +35,8 @@ void Data::printMenu() {
     std::cout << "2: Print Candlestick Chart" << std::endl;
     std::cout << "3: Compute data statistics" << std::endl;
     std::cout << "4: Print Available Countries" << std::endl;
-    std::cout << "5: Exit" << std::endl;
+    std::cout << "5: Filter data by range" << std::endl;
+    std::cout << "6: Exit" << std::endl;
 }
 
 
@@ -72,6 +73,9 @@ void Data::processUserOption(const int& userOption) {
             printData();
             break;
         case 5:
+            filterByDateRange();
+            break;            
+        case 6:
             std::cout << "Exiting program." << std::endl;
             std::exit(0); // Terminate the program
             break;
@@ -503,4 +507,99 @@ void Data::printCandlestickChart(const std::map<std::string, std::map<int, Candl
     std::cout << std::endl;
 
    
+}
+
+void Data::filterByDateRange() {
+    int startYear, endYear;
+
+    // Find the minimum and maximum years in the data
+    int minYear = data.front().year;
+    int maxYear = data.back().year; 
+
+    // Get starting year input with validation
+    do {
+        std::cout << "Enter the starting year (minimum: " << minYear << "): ";
+        std::cin >> startYear;
+
+        if (std::cin.fail()) {
+            std::cout << "Invalid input. Please enter a number." << std::endl;
+            std::cin.clear();
+            std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+        } else if (startYear < minYear || startYear > maxYear) {
+            std::cout << "Invalid year. Please enter a year between " << minYear << " and " << maxYear << "." << std::endl;
+        }
+    } while (std::cin.fail() || startYear < minYear || startYear > maxYear);
+
+    // Get ending year input with validation
+    do {
+        std::cout << "Enter the ending year (maximum: " << maxYear << "): ";
+        std::cin >> endYear;
+
+        if (std::cin.fail()) {
+            std::cout << "Invalid input. Please enter a number." << std::endl;
+            std::cin.clear();
+            std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+        } else if (endYear < minYear || endYear > maxYear) {
+            std::cout << "Invalid year. Please enter a year between " << minYear << " and " << maxYear << "." << std::endl;
+        } else if (endYear < startYear) {
+            std::cout << "Invalid range: Ending year cannot be less than starting year." << std::endl;
+        }
+    } while (std::cin.fail() || endYear < minYear || endYear > maxYear || endYear < startYear);
+
+  
+    filteredData.clear(); // Clear any previous filtered data
+
+    for (const auto& line : data) {
+        if (line.year >= startYear && line.year <= endYear) {
+            for (const auto& countryPair : line.countryTemperatures) {
+                filteredData.push_back(FilteredData{line.year, countryPair.first, countryPair.second});
+            }
+        }
+    }
+
+    std::cout << "********\nData filtered from " << startYear << " to " << endYear << std::endl;
+    
+    std::cout << "\nAverage Temperatures per Country and Year..." << std::endl;
+
+    // Collect temperatures for each country and year
+    std::map<std::string, std::map<int, std::vector<double>>> countryYearTemps;
+
+    for (const auto& item : filteredData) {
+        countryYearTemps[item.country][item.year].push_back(item.temperature);
+    }
+   
+    // Average temperatures for each year
+    std::map<int, double> yearlyAvgTemps;
+
+    // Calculate average temperatures for each year
+    for (const auto& item : filteredData) {
+        yearlyAvgTemps[item.year] += item.temperature;
+    }
+    for (auto& pair : yearlyAvgTemps) {
+        pair.second /= std::count_if(filteredData.begin(), filteredData.end(), 
+                                 [&](const FilteredData& item){ return item.year == pair.first; });
+    }
+
+
+    // Calculate and plot average temperatures
+    // Print with fixed widths
+    for (const auto& countryPair : countryYearTemps) {
+        std::string countryAverageString = countryPair.first + " Average";
+        std::cout << "\nCountry: " << countryPair.first << std::endl;
+        std::cout << std::setw(4) << std::left << "Year" << ": " 
+          << std::left << std::setw(11) << countryAverageString << " "  // This extra space was causing misalignment
+          << std::left << std::setw(11) << "/ EU Average" << std::endl; 
+        
+        for (const auto& yearPair : countryPair.second) {
+            int year = yearPair.first;
+            double avgTemp = std::accumulate(yearPair.second.begin(), yearPair.second.end(), 0.0) / yearPair.second.size();
+
+            // Set the color based on the comparison with EU average
+            std::string tempColor = (avgTemp > yearlyAvgTemps[year]) ? colorRed : colorBlue;
+
+            std::cout << std::setw(4) << std::left << year << ": " 
+                      << std::left << tempColor << std::setw(11) << std::fixed << std::setprecision(5) << avgTemp << colorReset << " / " 
+                      << std::left << std::fixed << std::setw(11) << std::setprecision(5) << yearlyAvgTemps[year] << std::endl;
+        }
+    }
 }
