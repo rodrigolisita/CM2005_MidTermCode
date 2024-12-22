@@ -158,16 +158,6 @@ void Data::printData()
                 for (const auto& countryPair : countries) {
                     std::cout << "- " << countryPair.first << std::endl;
                 }
-
-//    for (const auto& countryPair : data[0].countryTemperatures) 
-//    {
-//        for (const auto& line : data) 
-//        {
-//            std::cout << "Year: " << line.year << ". Country: "<< countryPair.first << std::endl;
-//        }
-//    }
-
-    
 }
 
 void Data::averageTemperatureForEachCountry() {
@@ -197,50 +187,76 @@ void Data::computeCandlesticks() {
     // Get the list of countries from the first data point
     const std::map<std::string, double>& countries = data[0].countryTemperatures; 
 
-    // Loop through countries
+    /* // Loop through countries */
+    /* for (const auto& countryPair : countries) { */
+    /*     std::string country = countryPair.first; */
+
+    /*     int currentYear = -1; // Initialize with an invalid year */
+
+    /*     // Loop through years (from the data) */
+    /*     for (const auto& line : data) { */
+    /*         int year = line.year; */
+    /*         double temperature = line.countryTemperatures.at(country); */
+
+
+    /*         if(year != currentYear){ */
+    /*             //New year detected */
+    /*             currentYear = year; */
+
+    /*             //Initialize a new candlestick for this year */
+    /*             candlesticks[country][year] = Candlestick(country, temperature, temperature, temperature, temperature); */
+    /*         } else { */
+    /*             // same year, update the close value */
+    /*             candlesticks[country][year].close = temperature; */
+
+    /*             // Update high and low */
+    /*             candlesticks[country][year].high = std::max(candlesticks[country][year].high, temperature); */
+    /*             candlesticks[country][year].low  = std::min(candlesticks[country][year].low,  temperature);  */
+
+    /*         } */
+    /*     } */
+    /* } */
+
     for (const auto& countryPair : countries) {
         std::string country = countryPair.first;
-        int currentYear = -1; // Initialize with an invalid year
 
-        // Loop through years (from the data)
+        std::map<int, std::vector<double>> yearlyTemperatures; 
+
+        // Collect temperatures for each year
         for (const auto& line : data) {
             int year = line.year;
             double temperature = line.countryTemperatures.at(country);
+            yearlyTemperatures[year].push_back(temperature);
+        }
 
-            if(year != currentYear){
-                //New year detected
-                currentYear = year;
+        // Calculate candlesticks 
+        for (auto it = yearlyTemperatures.begin(); it != yearlyTemperatures.end(); ++it) {
+            int year = it->first;
+            const std::vector<double>& temps = it->second;
 
-                //Initialize a new candlestick for this year
-                candlesticks[country][year] = Candlestick(country, temperature, temperature, temperature, temperature);
+            // Calculate average open (use the previous year's temperatures if available)
+            double open = 0.0;
+            if (it == yearlyTemperatures.begin()) {
+                const std::vector<double>& temps = it->second;
+                if (!temps.empty()) {
+                    open = temps[0]; // Get the first temperature of the year
+                }
             } else {
-                // same year, update the close value
-                candlesticks[country][year].close = temperature;
-
-                // Update high and low
-                candlesticks[country][year].high = std::max(candlesticks[country][year].high, temperature);
-                candlesticks[country][year].low  = std::min(candlesticks[country][year].low,  temperature); 
-
+                auto prevIt = std::prev(it);
+                const std::vector<double>& prevTemps = prevIt->second;
+                open = std::accumulate(prevTemps.begin(), prevTemps.end(), 0.0) / prevTemps.size();
             }
+
+            // Calculate average close (average of temperatures for the current year)
+            double close = std::accumulate(temps.begin(), temps.end(), 0.0) / temps.size(); 
+
+            // Find high and low
+            double high = *std::max_element(temps.begin(), temps.end());
+            double low = *std::min_element(temps.begin(), temps.end());
+
+            candlesticks[country][year] = Candlestick(country, open, close, high, low);
         }
     }
-
-   //printCandlestickChart(candlesticks);
-
-    // Print the candlesticks for each country
-//        for (const auto& countryPair : candlesticks) {
-//            std::cout << "Country: " << countryPair.first << std::endl;
-//            for (const auto& yearPair : countryPair.second) {
-//                int year = yearPair.first;
-//                const Candlestick& candle = yearPair.second;
-//                std::cout << "  Year: " << year
-//                        << ", Open: " << candle.open
-//                        << ", High: " << candle.high
-//                        << ", Low: " << candle.low
-//                        << ", Close: " << candle.close << std::endl;
-//            }
-//        }
-
 }
 
 std::string getCountry(const std::map<std::string, std::map<int, Candlestick>>& candlesticks){
@@ -288,13 +304,13 @@ void Data::printCandleStickData(const std::map<std::string, std::map<int, Candle
     int maxColumnWidth = 8;
 
     // year in rows
-    //std::cout << std::setw(maxColumnWidth) << std::left << "Year" << " Open " << "Close " << "High " << "Low" << std::endl; 
-    std::cout << std::setw(maxColumnWidth) << std::left << "Year" << 
-        std::setw(maxColumnWidth) << std::left << "Open  " <<
-        std::setw(maxColumnWidth) << std::left << "Close  " <<
-        std::setw(maxColumnWidth) << std::left << "High  " <<
-        std::setw(maxColumnWidth) << std::left << "Low  " <<
-        std::endl;
+    std::cout << std::setw(maxColumnWidth) << std::left << "Year" << " " 
+              << std::setw(maxColumnWidth) << std::left << "Open" << " "
+              << std::setw(maxColumnWidth) << std::left << "Close" << " "
+              << std::setw(maxColumnWidth) << std::left << "High" << " "
+              << std::setw(maxColumnWidth) << std::left << "Low" << " "
+              << std::endl;
+        
     for(const auto& yearPair : countryData){
         int year = yearPair.first;
         const Candlestick& candle = yearPair.second;
@@ -356,7 +372,7 @@ void Data::printCandlestickChart(const std::map<std::string, std::map<int, Candl
         return;
     }
 
-    int chartHeight = 30;
+    int chartHeight = 50;
     int barWidth = 6;
     std::string colorOption;
 
@@ -404,36 +420,6 @@ void Data::printCandlestickChart(const std::map<std::string, std::map<int, Candl
     }
     std::cout << std::endl;
     
-    
-/*     // Print the open values with adjusted width */
-/*     std::cout << std::setw(maxColumnWidth) <<std::left << "Open ";  */
-/*     for(const auto& yearPair : countryData){ */
-/*         const Candlestick& candle = yearPair.second; */
-/*         std::cout << std::setw(maxColumnWidth) << candle.open << " "; */
-/*     } */
-/*     std::cout << std::endl; */
-/*     // Print the close values with adjusted width */
-/*     std::cout << std::setw(maxColumnWidth) <<std::left << "Close ";  */
-/*     for(const auto& yearPair : countryData){ */
-/*         const Candlestick& candle = yearPair.second; */
-/*         std::cout << std::setw(maxColumnWidth) << candle.close << " "; */
-/*     } */
-/*     std::cout << std::endl; */
-/*     // Print the High values with adjusted width */
-/*     std::cout << std::setw(maxColumnWidth) <<std::left << "High ";  */
-/*     for(const auto& yearPair : countryData){ */
-/*         const Candlestick& candle = yearPair.second; */
-/*         std::cout << std::setw(maxColumnWidth) << candle.high << " "; */
-/*     } */
-/*     std::cout << std::endl; */
-/*     // Print the Low values with adjusted width */
-/*     std::cout << std::setw(maxColumnWidth) <<std::left << "Low ";  */
-/*     for(const auto& yearPair : countryData){ */
-/*         const Candlestick& candle = yearPair.second; */
-/*         std::cout << std::setw(maxColumnWidth) << candle.low << " "; */
-/*     } */
-/*     std::cout << std::endl; */
-    //std::cout << "----------------------------------" << std::endl;
     // Print "Year" below the y-axis values
     std::cout << std::setw(maxColumnWidth) << std::left << "--------" << " |"; 
     for(const auto& yearPair : countryData){
@@ -442,7 +428,7 @@ void Data::printCandlestickChart(const std::map<std::string, std::map<int, Candl
     std::cout << std::endl;
 
     // Add a margin to the high and low values for the y-axis range
-    double margin = 0.1 * countryRange; // 10% margin
+    double margin = 0.01 * countryRange; // 1% margin
     double yAxisHigh = countryMaxHigh + margin;
     double yAxisLow = countryMinLow - margin;    
     
@@ -473,10 +459,12 @@ void Data::printCandlestickChart(const std::map<std::string, std::map<int, Candl
 
             if (open <= tempValue && open > tempValueL) {
             // Print "U" or "D" if open value falls within the current row's range
-                std::cout << colorOption << std::setw(maxColumnWidth) << std::left << (open > close ? "O" : "O") << " " << colorReset; 
+                //std::cout << colorOption << std::setw(maxColumnWidth) << std::left << (open > close ? "O" : "O") << " " << colorReset; 
+                std::cout << colorOption << std::setw(maxColumnWidth) << std::left << "O" << " " << colorReset; 
             } else if (close >= tempValueL && close < tempValue) {
             // Print "U" or "D" if close value falls within the current row's range
-                std::cout << colorOption << std::setw(maxColumnWidth) << std::left << (open > close ? "C" : "C") << " " << colorReset; 
+                //std::cout << colorOption << std::setw(maxColumnWidth) << std::left << (open > close ? "C" : "C") << " " << colorReset; 
+                std::cout << colorOption << std::setw(maxColumnWidth) << std::left << "C" << " " << colorReset; 
             //}
             //if(realBodyHigh <=tempValue && realBodyHigh>tempValueL){
             //    std::cout << std::setw(maxColumnWidth) << std::left << realBodyHigh << " ";
@@ -491,7 +479,7 @@ void Data::printCandlestickChart(const std::map<std::string, std::map<int, Candl
                std::cout << colorOption << std::setw(maxColumnWidth) << std::left << "|" << " " << colorReset; 
             }else if (tempValue >= std::min(open, close) && tempValueL <= std::max(open, close)) {
             // Print "*" if the current row is between the open and close values
-            std::cout << colorOption << std::setw(maxColumnWidth) << std::left << "*" << " " << colorReset; 
+                std::cout << colorOption << std::setw(maxColumnWidth) << std::left << "*" << " " << colorReset; 
             }else {
                 //Print blank space to maintain alignment
                 std::cout << colorOption << std::setw(maxColumnWidth) << std::left << "" << " " << colorReset; 
