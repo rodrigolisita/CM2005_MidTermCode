@@ -18,7 +18,7 @@ class Data
         std::vector<TemperatureData> data;
         void printData();
         void printMenu();
-        static const int maxMenuOptions = 6; // Constant for maximum menu options
+        static const int maxMenuOptions = 8; // Constant for maximum menu options
         int getUserOption();
         void processUserOption(const int& userOption);
         void averageTemperatureForEachCountry();
@@ -31,6 +31,8 @@ class Data
         // Filtered Data
         std::vector<FilteredData> filteredData; // To store filtered data
         void filterByDateRange(); // Function to filter data by date range
+        void printFilteredData(const std::map<std::string, std::map<int, std::vector<double>>>& countryYearTemps,
+                            const std::map<int, double>& yearlyAvgTemps);
         void filterByCountry(); // Function to filter data by country
 
 
