@@ -636,4 +636,92 @@ void Data::printFilteredAverageTemperatureData(const std::map<std::string, std::
 
 void Data::filterByCountry(const std::map<std::string, std::map<int, Candlestick>>& candlesticks){
 
+    // Find the minimum and maximum years in the data
+    int startYear = data.front().year;
+    int endYear = data.back().year;
+
+    // Get the selectedCountry variable
+    std::string selectedCountry = getCountry(candlesticks);
+
+    filteredData.clear();
+
+    // Filter and store the candlestick data in filteredData for the selected country
+    const auto& countryData = candlesticks.at(selectedCountry);
+    for (const auto& yearPair : countryData) {
+        int year = yearPair.first;
+        if (year >= startYear && year <= endYear) {
+            const Candlestick& candle = yearPair.second;
+            filteredData.push_back(FilteredData{year, selectedCountry, candle.close, startYear, endYear});
+        }
+    }
+
+    // Find the minimum and maximum temperatures in the filtered data
+    double minTemp = std::numeric_limits<double>::max();
+    double maxTemp = std::numeric_limits<double>::min();
+    for (const auto& item : filteredData) {
+        minTemp = std::min(minTemp, item.temperature);
+        maxTemp = std::max(maxTemp, item.temperature);
+    }
+
+    // Add a margin to the high and low values for the y-axis range
+    double margin = 0.1 * (maxTemp - minTemp); // 10% margin
+    double yAxisHigh = maxTemp + margin;
+    double yAxisLow = minTemp - margin;
+
+    // Calculate the step size for the y-axis values
+    int chartHeight = 20; 
+    double yAxisStep = (yAxisHigh - yAxisLow) / chartHeight;
+
+    // Determine the maximum width for the year labels
+    int maxYearWidth = 0;
+    for (const auto& item : filteredData) {
+        std::stringstream ss;
+        ss << item.year;
+        maxYearWidth = std::max(maxYearWidth, static_cast<int>(ss.str().length()));
+    }
+
+    // Print the y-axis values
+    for (int i = chartHeight; i >= 0; --i) {
+        double tempValue = yAxisHigh - i * yAxisStep;
+        std::cout << std::setw(7) << std::setprecision(5) << tempValue << " | ";
+
+        for (const auto& item : filteredData) {
+            //if (item.temperature >= tempValue - yAxisStep && item.temperature <= tempValue) {
+            if (item.temperature <= tempValue) {
+                std::cout << std::setw(maxYearWidth) << "#" << " "; // Use maxYearWidth for alignment
+            } else {
+                std::cout << std::setw(maxYearWidth) << "" << " "; // Use maxYearWidth for alignment
+            }
+        }
+        std::cout << std::setw(7) << std::setprecision(5) << tempValue << " | ";
+        std::cout << std::endl;
+    }
+
+    // Print the x-axis (years)
+    //std::cout << std::setw(7) << std::setprecision(5) << "Year" << " | ";
+    std::cout << std::setw(7) << "Year" << " | ";
+    for (const auto& item : filteredData) {
+        std::cout << std::setw(maxYearWidth) << item.year << " "; // Use maxYearWidth for alignment
+    }
+    std::cout << std::endl;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    
+
 }
