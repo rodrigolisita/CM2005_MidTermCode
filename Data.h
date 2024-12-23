@@ -37,6 +37,7 @@ class Data
         //                    const std::map<int, double>& yearlyAvgTemps);
         void printFilteredAverageTemperatureData(const std::map<std::string, std::map<int, Candlestick>>& candlesticks);
         void filterByCountry(const std::map<std::string, std::map<int, Candlestick>>& candlesticks); // Function to filter data by country
+        void predictData(const std::map<std::string, std::map<int, Candlestick>>& candlesticks); // Function to predict temperatures
 
 
         // ANSI color codes (you can add more as needed)

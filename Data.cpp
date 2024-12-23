@@ -37,7 +37,9 @@ void Data::printMenu() {
     std::cout << "4: Print Available Countries" << std::endl;
     std::cout << "5: Filter data by year range" << std::endl;
     std::cout << "6: Filter data by Country" << std::endl;
-    std::cout << "7: Exit" << std::endl;
+    std::cout << "7: Predict data by Country" << std::endl;
+    
+    std::cout << "8: Exit" << std::endl;
 }
 
 
@@ -81,6 +83,9 @@ void Data::processUserOption(const int& userOption) {
             filterByCountry(candlesticks);
             break;            
         case 7:
+            predictData(candlesticks);
+            break;
+        case 8:
             std::cout << "Exiting program." << std::endl;
             std::exit(0); // Terminate the program
             break;
@@ -639,6 +644,7 @@ void Data::filterByCountry(const std::map<std::string, std::map<int, Candlestick
     // Find the minimum and maximum years in the data
     int startYear = data.front().year;
     int endYear = data.back().year;
+    
 
     // Get the selectedCountry variable
     std::string selectedCountry = getCountry(candlesticks);
@@ -705,23 +711,100 @@ void Data::filterByCountry(const std::map<std::string, std::map<int, Candlestick
     }
     std::cout << std::endl;
 
+}
 
+void Data::predictData(const std::map<std::string, std::map<int, Candlestick>>& candlesticks)
+{
+    // Get the date range from the user
+    //std::pair<int, int> dateRange = getDateRangeFromUser();
+    //int startYear = dateRange.first;
+    //int endYear = dateRange.second;
+    int columnWidth=12;
+    size_t headerWidths[6] = {
+        std::string("year |").size(),
+        std::string("Temperature").size(),
+        std::string("backwardDif").size(),
+        std::string("forwardDif").size(),
+        std::string("centralDif").size(),
+        std::string("Actual").size()
+};
 
+    int firstYear = data.front().year; // Get the first year in the entire dataset
+    int lastYear = data.back().year; // Get the first year in the entire dataset
 
+    int startYear = firstYear;
+    int endYear = lastYear;
 
+    // Get the selected country from the user
+    std::string selectedCountry = getCountry(candlesticks);
 
+    filteredData.clear();
 
+    // Filter and store the candlestick data in filteredData for the selected country
+    const auto& countryData = candlesticks.at(selectedCountry);
+    for (const auto& yearPair : countryData) {
+        int year = yearPair.first;
+        if (year >= startYear && year <= endYear) {
+            const Candlestick& candle = yearPair.second;
+            filteredData.push_back(FilteredData{year, selectedCountry, candle.close, startYear, endYear});
+        }
+    }
 
+    // Calculate temperature differences between consecutive years
+    std::vector<double> tempDifferences;
+    std::vector<double> forwardDifferences;
+    std::vector<double> centralDifferences;
 
+    // Special handling for the first element
+    if (!filteredData.empty()) {
+        const auto& firstItem = filteredData.front();
+        //double firstDiff = firstItem.temperature - candlesticks.at(selectedCountry).at(firstItem.year).open;
+        double firstDiff = candlesticks.at(selectedCountry).at(firstItem.year).close - candlesticks.at(selectedCountry).at(firstItem.year).open;
+        tempDifferences.push_back(firstDiff);
+        centralDifferences.push_back(firstDiff);
+    }
 
+    // Calculate differences for the rest of the elements, excluding the last one
+    for (size_t i = 1; i < filteredData.size() - 1; ++i) {
+        double diff = filteredData[i].temperature - filteredData[i - 1].temperature;
+        tempDifferences.push_back(diff);
 
+        double fdiff = filteredData[i + 1].temperature - filteredData[i].temperature;
+        forwardDifferences.push_back(fdiff);
 
+        double cDiff = 0.5*(filteredData[i + 1].temperature - filteredData[i].temperature);
+        centralDifferences.push_back(cDiff);
+    }
 
-
-
-
-
-
+    // Special handling for the last element
+    if (filteredData.size() > 1) {
+        const auto& lastItem = filteredData.back();
+        //double lastDiff = candlesticks.at(selectedCountry).at(lastItem.year).close - lastItem.temperature;
+        double lastDiff = candlesticks.at(selectedCountry).at(lastItem.year).close - candlesticks.at(selectedCountry).at(lastItem.year).open;
+        forwardDifferences.push_back(lastDiff); 
+        centralDifferences.push_back(lastDiff); 
+    }        
     
+
+
+    // Print the temperatures and differences
+    std::cout << std::left << std::setw(headerWidths[0]) << "Year" << "|";
+    std::cout << std::left << std::setw(headerWidths[1]) << "Temperature" << " ";
+    std::cout << std::left << std::setw(headerWidths[2]) << "backwardDif" << " ";
+    std::cout << std::left << std::setw(headerWidths[2]) << "forwardDif" << " ";
+    std::cout << std::left << std::setw(headerWidths[3]) << "centralDif" << " ";
+    std::cout << std::left << std::setw(headerWidths[4]) << "Actual" << std::endl;
+    for (size_t i = 1; i < filteredData.size()-1; ++i) { // Loopover the second year to the second to last
+        std::cout << std::left << std::setw(headerWidths[0]) << filteredData[i].year << "|";
+        std::cout << std::left << std::setw(headerWidths[1]) << filteredData[i].temperature << " ";
+        std::cout << std::left << std::setw(headerWidths[2]) << filteredData[i].temperature + tempDifferences[i] << " ";
+        std::cout << std::left << std::setw(headerWidths[3]) << filteredData[i].temperature + forwardDifferences[i] << " ";
+        std::cout << std::left << std::setw(headerWidths[4]) << filteredData[i].temperature + centralDifferences[i] << " ";
+        std::cout << std::left << std::setw(headerWidths[5]) << filteredData[i+1].temperature;
+        std::cout << std::endl;
+    }
+
+
+
 
 }
