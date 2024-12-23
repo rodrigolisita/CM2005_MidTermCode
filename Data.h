@@ -6,6 +6,7 @@
 #include "TemperatureData.h"
 #include "Candlestick.h"
 #include "FilteredData.h"
+#include "TemperatureDifferenceData.h"
 
 class Data
 {
@@ -39,11 +40,17 @@ class Data
         void filterByCountry(const std::map<std::string, std::map<int, Candlestick>>& candlesticks); // Function to filter data by country
         void predictData(const std::map<std::string, std::map<int, Candlestick>>& candlesticks); // Function to predict temperatures
 
+        std::map<int, double> yearlyAverageTemperatures;
+        void computeYearlyAverageTemperatures();
+        std::vector<TemperatureDifferenceData> tempDiffData; 
+
 
         // ANSI color codes (you can add more as needed)
-        const std::string colorRed = "\033[31m";
-        const std::string colorGreen = "\033[32m";
-        const std::string colorBlue = "\033[34m";
-        const std::string colorReset = "\033[0m"; 
+        //const std::string colorRed = "\033[31m";
+        //const std::string colorGreen = "\033[32m";
+        //const std::string colorBlue = "\033[34m";
+        //const std::string colorReset = "\033[0m"; 
+
+        static double error (double x1, double x2);
 
 };

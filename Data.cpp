@@ -11,6 +11,8 @@
 #include <map>      // Include the map header
 #include <functional>
 
+#include "ANSI_CODES.h" //For the color codes
+
 void Data::init()
 {
     std::cout << "Hello from Weather data EU 1980-2019" << std::endl;
@@ -720,14 +722,6 @@ void Data::predictData(const std::map<std::string, std::map<int, Candlestick>>& 
     //int startYear = dateRange.first;
     //int endYear = dateRange.second;
     int columnWidth=12;
-    size_t headerWidths[6] = {
-        std::string("year |").size(),
-        std::string("Temperature").size(),
-        std::string("backwardDif").size(),
-        std::string("forwardDif").size(),
-        std::string("centralDif").size(),
-        std::string("Actual").size()
-};
 
     int firstYear = data.front().year; // Get the first year in the entire dataset
     int lastYear = data.back().year; // Get the first year in the entire dataset
@@ -735,8 +729,13 @@ void Data::predictData(const std::map<std::string, std::map<int, Candlestick>>& 
     int startYear = firstYear;
     int endYear = lastYear;
 
+    computeYearlyAverageTemperatures(); // Average temperatures for all countries
+
     // Get the selected country from the user
     std::string selectedCountry = getCountry(candlesticks);
+
+
+    std::vector<TemperatureDifferenceData> tempDiffData; // Use the new class
 
     filteredData.clear();
 
@@ -746,65 +745,130 @@ void Data::predictData(const std::map<std::string, std::map<int, Candlestick>>& 
         int year = yearPair.first;
         if (year >= startYear && year <= endYear) {
             const Candlestick& candle = yearPair.second;
-            filteredData.push_back(FilteredData{year, selectedCountry, candle.close, startYear, endYear});
+
+            // Access the yearly Average Temperature
+            double euAvgTemp = yearlyAverageTemperatures.at(year);
+            filteredData.push_back(FilteredData{year, selectedCountry, candle.close, startYear, endYear, euAvgTemp});
         }
     }
 
     // Calculate temperature differences between consecutive years
-    std::vector<double> tempDifferences;
-    std::vector<double> forwardDifferences;
-    std::vector<double> centralDifferences;
+    //std::vector<double> backWardDifferences;
+    //std::vector<double> second;
+    //std::vector<double> difToC;
+    //std::vector<double> forwardDifferences;
+    //std::vector<double> centralDifferences;
+  
+    double temperatureDifference = 0.0;
+    double previousTemperature = 0.0;
+    bool isFirstYear = true; // Flag to track the first year
+    bool isSecondYear = true; // Flag to track the second year
 
-    // Special handling for the first element
-    if (!filteredData.empty()) {
-        const auto& firstItem = filteredData.front();
-        //double firstDiff = firstItem.temperature - candlesticks.at(selectedCountry).at(firstItem.year).open;
-        double firstDiff = candlesticks.at(selectedCountry).at(firstItem.year).close - candlesticks.at(selectedCountry).at(firstItem.year).open;
-        tempDifferences.push_back(firstDiff);
-        centralDifferences.push_back(firstDiff);
+    for (auto& item : filteredData) {
+        if (item.year == firstYear && isFirstYear) {  //First year
+            temperatureDifference = item.temperature;
+            isFirstYear = false; // Reset the flag after processing the first year
+        } else if (isSecondYear) { // Check for the second year
+            temperatureDifference = item.temperature - filteredData.front().temperature;
+            isSecondYear = false; // Reset the flag after processing the second year
+        } else {
+            temperatureDifference = item.temperature - previousTemperature;
+        }
+        tempDiffData.push_back(TemperatureDifferenceData{item.year, item.country, item.temperature, 
+                                                         item.startYear, item.endYear, temperatureDifference, item.euAvTemp, item.temperature});
+        //backWardDifferences.push_back(temperatureDifference);
+        //item.backWardDifference = temperatureDifference;
+        previousTemperature = item.temperature;
     }
 
-    // Calculate differences for the rest of the elements, excluding the last one
-    for (size_t i = 1; i < filteredData.size() - 1; ++i) {
-        double diff = filteredData[i].temperature - filteredData[i - 1].temperature;
-        tempDifferences.push_back(diff);
-
-        double fdiff = filteredData[i + 1].temperature - filteredData[i].temperature;
-        forwardDifferences.push_back(fdiff);
-
-        double cDiff = 0.5*(filteredData[i + 1].temperature - filteredData[i].temperature);
-        centralDifferences.push_back(cDiff);
+    // Correct the EU difference
+    for (auto& item : tempDiffData) {
+        item.euDifference = item.temperature - item.euDifference;
     }
 
-    // Special handling for the last element
-    if (filteredData.size() > 1) {
-        const auto& lastItem = filteredData.back();
-        //double lastDiff = candlesticks.at(selectedCountry).at(lastItem.year).close - lastItem.temperature;
-        double lastDiff = candlesticks.at(selectedCountry).at(lastItem.year).close - candlesticks.at(selectedCountry).at(lastItem.year).open;
-        forwardDifferences.push_back(lastDiff); 
-        centralDifferences.push_back(lastDiff); 
-    }        
-    
-
-
+    // Correct next temperature value
+    for (auto it = tempDiffData.begin(); it != tempDiffData.end(); ++it) {
+        auto& item = *it; // Get the current item
+        double nextTemp = item.temperature;
+        if (std::next(it) != tempDiffData.end()) { // Check if there is a next item
+            nextTemp = std::next(it)->temperature;
+        }
+        item.nextTemperature = nextTemp;
+     }
+   
     // Print the temperatures and differences
-    std::cout << std::left << std::setw(headerWidths[0]) << "Year" << "|";
-    std::cout << std::left << std::setw(headerWidths[1]) << "Temperature" << " ";
-    std::cout << std::left << std::setw(headerWidths[2]) << "backwardDif" << " ";
-    std::cout << std::left << std::setw(headerWidths[2]) << "forwardDif" << " ";
-    std::cout << std::left << std::setw(headerWidths[3]) << "centralDif" << " ";
-    std::cout << std::left << std::setw(headerWidths[4]) << "Actual" << std::endl;
-    for (size_t i = 1; i < filteredData.size()-1; ++i) { // Loopover the second year to the second to last
-        std::cout << std::left << std::setw(headerWidths[0]) << filteredData[i].year << "|";
-        std::cout << std::left << std::setw(headerWidths[1]) << filteredData[i].temperature << " ";
-        std::cout << std::left << std::setw(headerWidths[2]) << filteredData[i].temperature + tempDifferences[i] << " ";
-        std::cout << std::left << std::setw(headerWidths[3]) << filteredData[i].temperature + forwardDifferences[i] << " ";
-        std::cout << std::left << std::setw(headerWidths[4]) << filteredData[i].temperature + centralDifferences[i] << " ";
-        std::cout << std::left << std::setw(headerWidths[5]) << filteredData[i+1].temperature;
+    std::cout << std::left << std::setw(5) << "Year" << "|";
+    std::cout << std::left << std::setw(columnWidth) << "Temperature" << "|";
+    std::cout << std::left << std::setw(columnWidth) << "backwardDif" << " ";
+    std::cout << std::left << std::setw(columnWidth) << "ERR %" << "|";
+//    std::cout << std::left << std::setw(columnWidth) << "Taylor" << " ";
+//    std::cout << std::left << std::setw(columnWidth) << "ERR %" << "|";
+    std::cout << std::left << std::setw(columnWidth) << "EU" << " ";
+    std::cout << std::left << std::setw(columnWidth) << "ERR %" << "|";
+//    //std::cout << std::left << std::setw(headerWidths[3]) << "centralDif" << " ";
+    std::cout << std::left << std::setw(columnWidth) << "Actual" << std::endl;
+    for (const auto& item : tempDiffData) {
+    //for (auto it = tempDiffData.begin(); it != tempDiffData.end(); ++it) {
+      //  const auto& item = *it; // Get the current item
+        double nextTemp = item.nextTemperature;
+      //   if (std::next(it) != tempDiffData.end()) { // Check if there is a next item
+      //      nextTemp = std::next(it)->temperature;
+      //   }
+    //for (size_t i = 1; i < filteredData.size()-1; ++i) { // Loopover the second year to the second to last
+        std::cout << std::left << std::setw(5) << item.year << "|";
+        double t = item.temperature;
+        double bd = item.temperature + item.backwardDifference;
+        double erD = item.temperature + item.euDifference;
+//        double d2 = filteredData[i].temperature + tempDifferences[i] + 0.5*second[i];
+//        double d3 = filteredData[i].temperature + difToC[i];
+        double err1 = Data::error(nextTemp,bd);
+//        double err2 = Data::error(t,d2);
+        double err3 = Data::error(nextTemp,erD);
+        std::cout << std::left << std::setw(columnWidth) << t << "|";
+        std::cout << std::left << std::setw(columnWidth) <<  bd << " ";
+        std::cout << std::left << std::setw(columnWidth) <<  err1 << "|";
+        std::cout << std::left << std::setw(columnWidth) << erD << " ";
+        std::cout << std::left << std::setw(columnWidth) <<  err3 << "|";
+//        std::cout << std::left << std::setw(columnWidth) << d3 << " ";
+//        std::cout << std::left << std::setw(columnWidth) <<  err3 << "|";
+//        //std::cout << std::left << std::setw(headerWidths[4]) << filteredData[i].temperature + centralDifferences[i] << " ";
+        //if (std::next(it) != tempDiffData.end()) { // Check if there is a next item
+            //std::cout << std::next(it)->temperature; // Print the next item's temperature
+            //std::cout << std::left << std::setw(columnWidth) << std::next(it)->temperature << "|";
+            std::cout << std::left << std::setw(columnWidth) << nextTemp << "|";
+            
+        //}
+
+        
         std::cout << std::endl;
     }
 
 
 
 
+}
+
+double Data::error (double x1, double x2){
+    double err = 100*(x1-x2)/x1;
+    return err;
+}
+
+void Data::computeYearlyAverageTemperatures() { 
+    std::map<int, std::vector<double>> yearlyTemperatures;
+
+    // Collect temperatures for each year
+    for (const auto& line : data) {
+        int year = line.year;
+        for (const auto& countryPair : line.countryTemperatures) {
+            yearlyTemperatures[year].push_back(countryPair.second);
+        }
+    }
+
+    // Calculate average temperature for each year
+    for (const auto& yearPair : yearlyTemperatures) {
+        int year = yearPair.first;
+        const std::vector<double>& temps = yearPair.second;
+        double avgTemp = std::accumulate(temps.begin(), temps.end(), 0.0) / temps.size();
+        yearlyAverageTemperatures[year] = avgTemp;
+    }
 }
