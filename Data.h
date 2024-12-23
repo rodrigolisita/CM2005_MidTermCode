@@ -30,10 +30,13 @@ class Data
         
         // Filtered Data
         std::vector<FilteredData> filteredData; // To store filtered data
-        void filterByDateRange(); // Function to filter data by date range
-        void printFilteredData(const std::map<std::string, std::map<int, std::vector<double>>>& countryYearTemps,
-                            const std::map<int, double>& yearlyAvgTemps);
-        void filterByCountry(); // Function to filter data by country
+        std::pair<int, int> getDateRangeFromUser(); // Store start and end year range for filtered data
+        void filterByDateRange(const std::map<std::string, std::map<int, Candlestick>>& candlesticks); // Function to filter data by date range
+        void filterData(int startYear, int endYear, const std::map<std::string, std::map<int, Candlestick>>& candlesticks);
+        //void printFilteredData(const std::map<std::string, std::map<int, std::vector<double>>>& countryYearTemps,
+        //                    const std::map<int, double>& yearlyAvgTemps);
+        void printFilteredAverageTemperatureData(const std::map<std::string, std::map<int, Candlestick>>& candlesticks);
+        void filterByCountry(const std::map<std::string, std::map<int, Candlestick>>& candlesticks); // Function to filter data by country
 
 
         // ANSI color codes (you can add more as needed)

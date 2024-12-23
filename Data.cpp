@@ -35,7 +35,7 @@ void Data::printMenu() {
     std::cout << "2: Print Candlestick Chart" << std::endl;
     std::cout << "3: Compute data statistics" << std::endl;
     std::cout << "4: Print Available Countries" << std::endl;
-    std::cout << "5: Filter data by range" << std::endl;
+    std::cout << "5: Filter data by year range" << std::endl;
     std::cout << "6: Filter data by Country" << std::endl;
     std::cout << "7: Exit" << std::endl;
 }
@@ -74,10 +74,11 @@ void Data::processUserOption(const int& userOption) {
             printData();
             break;
         case 5:
-            filterByDateRange();
+            //filterByDateRange();
+            printFilteredAverageTemperatureData(candlesticks);
             break;
         case 6: 
-            filterByCountry();
+            filterByCountry(candlesticks);
             break;            
         case 7:
             std::cout << "Exiting program." << std::endl;
@@ -254,6 +255,7 @@ void Data::computeCandlesticks() {
                 const std::vector<double>& prevTemps = prevIt->second;
                 open = std::accumulate(prevTemps.begin(), prevTemps.end(), 0.0) / prevTemps.size();
             }
+
 
             // Calculate average close (average of temperatures for the current year)
             double close = std::accumulate(temps.begin(), temps.end(), 0.0) / temps.size(); 
@@ -513,12 +515,12 @@ void Data::printCandlestickChart(const std::map<std::string, std::map<int, Candl
    
 }
 
-void Data::filterByDateRange() {
+std::pair<int, int> Data::getDateRangeFromUser() {
     int startYear, endYear;
 
     // Find the minimum and maximum years in the data
     int minYear = data.front().year;
-    int maxYear = data.back().year; 
+    int maxYear = data.back().year;
 
     // Get starting year input with validation
     do {
@@ -550,67 +552,88 @@ void Data::filterByDateRange() {
         }
     } while (std::cin.fail() || endYear < minYear || endYear > maxYear || endYear < startYear);
 
-  
+    return std::make_pair(startYear, endYear); // Return the start and end years as a pair
+}
+
+void Data::filterData(int startYear, int endYear, const std::map<std::string, std::map<int, Candlestick>>& candlesticks) {
+ 
     filteredData.clear(); // Clear any previous filtered data
 
-    for (const auto& line : data) {
-        if (line.year >= startYear && line.year <= endYear) {
-            for (const auto& countryPair : line.countryTemperatures) {
-                filteredData.push_back(FilteredData{line.year, countryPair.first, countryPair.second});
+//    for (const auto& line : data) {
+//        if (line.year >= startYear && line.year <= endYear) {
+//            for (const auto& countryPair : line.countryTemperatures) {
+//                filteredData.push_back(FilteredData{line.year, countryPair.first, countryPair.second, startYear, endYear}); 
+//            }
+//        }
+//    }
+    
+    // Filter and store the candlestick data in filteredData
+    for (const auto& countryPair : candlesticks) {
+        const std::string& country = countryPair.first;
+        for (const auto& yearPair : countryPair.second) {
+            int year = yearPair.first;
+            if (year >= startYear && year <= endYear) {
+                const Candlestick& candle = yearPair.second;
+
+                // Store the average temperature (open or close - they are the same)
+                filteredData.push_back(FilteredData{year, country, candle.close, startYear, endYear}); 
             }
         }
     }
+}
 
-    std::cout << "********\nData filtered from " << startYear << " to " << endYear << std::endl;
-    
-    // Collect temperatures for each country and year
-    std::map<std::string, std::map<int, std::vector<double>>> countryYearTemps;
+void Data::filterByDateRange(const std::map<std::string, std::map<int, Candlestick>>& candlesticks) {
 
+    std::pair<int, int> dateRange = Data::getDateRangeFromUser();
+    int startYear = dateRange.first;
+    int endYear = dateRange.second;
+ 
+    filterData(startYear, endYear, candlesticks); // Call filterData to populate filteredData
+
+
+}
+
+void Data::printFilteredAverageTemperatureData(const std::map<std::string, std::map<int, Candlestick>>& candlesticks) {                                    
+
+    Data::filterByDateRange(candlesticks);
+
+    // Group data by country
+    std::map<std::string, std::vector<FilteredData>> countryData;
     for (const auto& item : filteredData) {
-        countryYearTemps[item.country][item.year].push_back(item.temperature);
+        countryData[item.country].push_back(item);
     }
-   
-    // Average temperatures for each year
+
+    // Calculate yearly averages across all countries
     std::map<int, double> yearlyAvgTemps;
+    std::map<int, int> yearlyCount; 
     for (const auto& item : filteredData) {
         yearlyAvgTemps[item.year] += item.temperature;
+        yearlyCount[item.year]++;
     }
     for (auto& pair : yearlyAvgTemps) {
-        pair.second /= std::count_if(filteredData.begin(), filteredData.end(), 
-                                 [&](const FilteredData& item){ return item.year == pair.first; });
+        pair.second /= yearlyCount[pair.first];
     }
 
-
-    // Print the filtered data
-    printFilteredData(countryYearTemps, yearlyAvgTemps); 
-
-}
-
-void Data::printFilteredData(const std::map<std::string, std::map<int, std::vector<double>>>& countryYearTemps,
-                             const std::map<int, double>& yearlyAvgTemps) {                                
-
-    std::cout << "\nAverage Temperatures per Country and Year:" << std::endl;
-    
-    for (const auto& countryPair : countryYearTemps) {
-        std::string countryAverageString = countryPair.first + " Average";
+    // Print
+    for (const auto& countryPair : countryData) {
         std::cout << "\nCountry: " << countryPair.first << std::endl;
         std::cout << std::setw(4) << std::left << "Year" << ": " 
-          << std::left << std::setw(11) << countryAverageString << " "  // This extra space was causing misalignment
-          << std::left << std::setw(11) << "/ EU Average" << std::endl; 
-
-        for (const auto& yearPair : countryPair.second) {
-            int year = yearPair.first;
-            double avgTemp = std::accumulate(yearPair.second.begin(), yearPair.second.end(), 0.0) / yearPair.second.size();
-            // Set the color based on the comparison with EU average
-            std::string tempColor = (avgTemp >  yearlyAvgTemps.at(year)) ? colorRed : colorBlue;
-            std::cout << std::setw(4) << std::left << year << ": " 
-                      << std::left << tempColor << std::setw(11) << std::fixed << std::setprecision(5) << avgTemp << colorReset << " / " 
-                      << std::left << std::fixed << std::setw(11) << std::setprecision(5) <<  yearlyAvgTemps.at(year) << std::endl;
+        << std::left << std::setw(11) << "Temperature" << " " 
+        << std::left << std::setw(11) << "/ EU Average" << std::endl; 
+        
+        for (const auto& item : countryPair.second) {
+        
+        // Set the color based on the comparison with EU average
+        std::string tempColor = (item.temperature >  yearlyAvgTemps.at(item.year)) ? colorRed : colorBlue;
+        std::cout << std::setw(4) << std::left << item.year << ": " 
+                  << std::right << tempColor << std::setw(11) << std::fixed << std::setprecision(5) << item.temperature << colorReset << " / " 
+                  << std::left << std::fixed << std::setw(11) << std::setprecision(5) <<  yearlyAvgTemps.at(item.year) << std::endl;
         }
     }
-                            
+
+
 }
 
-void Data::filterByCountry(){
+void Data::filterByCountry(const std::map<std::string, std::map<int, Candlestick>>& candlesticks){
 
 }
