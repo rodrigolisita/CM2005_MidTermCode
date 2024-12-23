@@ -717,10 +717,6 @@ void Data::filterByCountry(const std::map<std::string, std::map<int, Candlestick
 
 void Data::predictData(const std::map<std::string, std::map<int, Candlestick>>& candlesticks)
 {
-    // Get the date range from the user
-    //std::pair<int, int> dateRange = getDateRangeFromUser();
-    //int startYear = dateRange.first;
-    //int endYear = dateRange.second;
     int columnWidth=12;
 
     int firstYear = data.front().year; // Get the first year in the entire dataset
@@ -734,8 +730,7 @@ void Data::predictData(const std::map<std::string, std::map<int, Candlestick>>& 
     // Get the selected country from the user
     std::string selectedCountry = getCountry(candlesticks);
 
-
-    std::vector<TemperatureDifferenceData> tempDiffData; // Use the new class
+    std::vector<TemperatureDifferenceData> tempDiffData; // Use the classTemperatureDifferenceData
 
     filteredData.clear();
 
@@ -752,38 +747,44 @@ void Data::predictData(const std::map<std::string, std::map<int, Candlestick>>& 
         }
     }
 
-    // Calculate temperature differences between consecutive years
-    //std::vector<double> backWardDifferences;
-    //std::vector<double> second;
-    //std::vector<double> difToC;
-    //std::vector<double> forwardDifferences;
-    //std::vector<double> centralDifferences;
-  
     double temperatureDifference = 0.0;
+    double taylorTemperatureDifference = 0.0;
     double previousTemperature = 0.0;
+    double secondPreviousTemperature = 0.0;
     bool isFirstYear = true; // Flag to track the first year
     bool isSecondYear = true; // Flag to track the second year
 
     for (auto& item : filteredData) {
         if (item.year == firstYear && isFirstYear) {  //First year
             temperatureDifference = item.temperature;
+            secondPreviousTemperature = item.temperature;
             isFirstYear = false; // Reset the flag after processing the first year
         } else if (isSecondYear) { // Check for the second year
             temperatureDifference = item.temperature - filteredData.front().temperature;
+            secondPreviousTemperature = item.temperature;
             isSecondYear = false; // Reset the flag after processing the second year
         } else {
             temperatureDifference = item.temperature - previousTemperature;
+            taylorTemperatureDifference = item.temperature - 2.0*previousTemperature + secondPreviousTemperature;
         }
         tempDiffData.push_back(TemperatureDifferenceData{item.year, item.country, item.temperature, 
-                                                         item.startYear, item.endYear, temperatureDifference, item.euAvTemp, item.temperature});
-        //backWardDifferences.push_back(temperatureDifference);
-        //item.backWardDifference = temperatureDifference;
+                                                         item.startYear, item.endYear, 
+                                                         item.temperature,       //next
+                                                         temperatureDifference, //backward
+                                                         item.temperature - item.euAvTemp,         // EU
+                                                         taylorTemperatureDifference       // Taylor
+                                                         });
+        secondPreviousTemperature = previousTemperature;
         previousTemperature = item.temperature;
     }
 
-    // Correct the EU difference
+    // Compute the prediction temperatures
     for (auto& item : tempDiffData) {
-        item.euDifference = item.temperature - item.euDifference;
+        //item.euDifference = item.temperature - item.euDifference;
+        item.euDifference = item.temperature + item.euDifference;
+        item.backwardDifference = item.temperature + item.backwardDifference;
+        item.taylorPrediction = item.temperature + item.taylorPrediction;
+        item.averageALL = (item.temperature + item.euDifference + item.backwardDifference + item.taylorPrediction)*0.25;
     }
 
     // Correct next temperature value
@@ -801,45 +802,41 @@ void Data::predictData(const std::map<std::string, std::map<int, Candlestick>>& 
     std::cout << std::left << std::setw(columnWidth) << "Temperature" << "|";
     std::cout << std::left << std::setw(columnWidth) << "backwardDif" << " ";
     std::cout << std::left << std::setw(columnWidth) << "ERR %" << "|";
-//    std::cout << std::left << std::setw(columnWidth) << "Taylor" << " ";
-//    std::cout << std::left << std::setw(columnWidth) << "ERR %" << "|";
     std::cout << std::left << std::setw(columnWidth) << "EU" << " ";
+    std::cout << std::left << std::setw(columnWidth) << "ERR %" << "|";
+    std::cout << std::left << std::setw(columnWidth) << "Taylor" << " ";
+    std::cout << std::left << std::setw(columnWidth) << "ERR %" << "|";
+    std::cout << std::left << std::setw(columnWidth) << "Average" << " ";
     std::cout << std::left << std::setw(columnWidth) << "ERR %" << "|";
 //    //std::cout << std::left << std::setw(headerWidths[3]) << "centralDif" << " ";
     std::cout << std::left << std::setw(columnWidth) << "Actual" << std::endl;
     for (const auto& item : tempDiffData) {
-    //for (auto it = tempDiffData.begin(); it != tempDiffData.end(); ++it) {
-      //  const auto& item = *it; // Get the current item
         double nextTemp = item.nextTemperature;
-      //   if (std::next(it) != tempDiffData.end()) { // Check if there is a next item
-      //      nextTemp = std::next(it)->temperature;
-      //   }
-    //for (size_t i = 1; i < filteredData.size()-1; ++i) { // Loopover the second year to the second to last
-        std::cout << std::left << std::setw(5) << item.year << "|";
-        double t = item.temperature;
-        double bd = item.temperature + item.backwardDifference;
-        double erD = item.temperature + item.euDifference;
-//        double d2 = filteredData[i].temperature + tempDifferences[i] + 0.5*second[i];
-//        double d3 = filteredData[i].temperature + difToC[i];
-        double err1 = Data::error(nextTemp,bd);
-//        double err2 = Data::error(t,d2);
-        double err3 = Data::error(nextTemp,erD);
-        std::cout << std::left << std::setw(columnWidth) << t << "|";
-        std::cout << std::left << std::setw(columnWidth) <<  bd << " ";
-        std::cout << std::left << std::setw(columnWidth) <<  err1 << "|";
-        std::cout << std::left << std::setw(columnWidth) << erD << " ";
-        std::cout << std::left << std::setw(columnWidth) <<  err3 << "|";
-//        std::cout << std::left << std::setw(columnWidth) << d3 << " ";
-//        std::cout << std::left << std::setw(columnWidth) <<  err3 << "|";
-//        //std::cout << std::left << std::setw(headerWidths[4]) << filteredData[i].temperature + centralDifferences[i] << " ";
-        //if (std::next(it) != tempDiffData.end()) { // Check if there is a next item
-            //std::cout << std::next(it)->temperature; // Print the next item's temperature
-            //std::cout << std::left << std::setw(columnWidth) << std::next(it)->temperature << "|";
-            std::cout << std::left << std::setw(columnWidth) << nextTemp << "|";
-            
-        //}
-
+        double currentTemperature = item.temperature;
+        double backPrediction = item.backwardDifference;
+        double EUPrediction = item.euDifference;
+        double taylorPrediction = item.taylorPrediction;
+        double averagePrediction = item.averageALL;
         
+        std::cout << std::left << std::setw(5) << item.year << "|";
+
+        double err1 = Data::error(nextTemp,backPrediction);
+        double err2 = Data::error(nextTemp,EUPrediction);
+        double err3 = Data::error(nextTemp,taylorPrediction);
+        double err4 = Data::error(nextTemp,averagePrediction);
+
+        std::cout << std::left << std::setw(columnWidth) << currentTemperature << "|";
+        std::cout << std::left << std::setw(columnWidth) <<  backPrediction << " ";
+        std::cout << std::left << std::setw(columnWidth) <<  err1 << "|";
+        std::cout << std::left << std::setw(columnWidth) << EUPrediction << " ";
+        std::cout << std::left << std::setw(columnWidth) <<  err2 << "|";
+        std::cout << std::left << std::setw(columnWidth) << taylorPrediction << " ";
+        std::cout << std::left << std::setw(columnWidth) <<  err3 << "|";
+        std::cout << std::left << std::setw(columnWidth) << averagePrediction << " ";
+        std::cout << std::left << std::setw(columnWidth) <<  err4 << "|";
+//        //std::cout << std::left << std::setw(headerWidths[4]) << filteredData[i].temperature + centralDifferences[i] << " ";
+
+        std::cout << std::left << std::setw(columnWidth) << nextTemp << "|";
         std::cout << std::endl;
     }
 
