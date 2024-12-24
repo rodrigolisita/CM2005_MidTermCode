@@ -18,9 +18,10 @@ class Data
     private:
         void loadData();
         std::vector<TemperatureData> data;
-        void printAvailableCountries();
-        void printMenu();
         static const int maxMenuOptions = 8; // Constant for maximum menu options
+        void printMenu();
+        void printAvailableCountries();
+        std::string getCountry(const std::map<std::string, std::map<int, Candlestick>>& candlesticks);
         int getUserOption();
         void processUserOption(const int& userOption);
         void averageTemperatureForEachCountry();

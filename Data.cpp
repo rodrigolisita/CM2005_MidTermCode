@@ -39,7 +39,7 @@ void Data::printMenu() {
     std::cout << "4: Print Candlestick Chart for selected country" << std::endl;
     std::cout << "5: Display average temperature by year range" << std::endl;
     std::cout << "6: Average temperature bar chart for selected Country" << std::endl;
-    std::cout << "7: Predict Temperarure by Country" << std::endl;
+    std::cout << "7: Predict Temperature by Country" << std::endl;
     
     std::cout << "8: Exit" << std::endl;
 }
@@ -86,11 +86,11 @@ void Data::processUserOption(const int& userOption) {
             printFilteredAverageTemperatureData(candlesticks);
             break;
         case 6: 
-            std::cout << "Filter data by Country\n************" << std::endl;
+            std::cout << "Average temperature bar chart fo selected Country\n************" << std::endl;
             filterByCountry(candlesticks);
             break;            
         case 7:
-            std::cout << "Predict temperatures\n************" << std::endl;
+            std::cout << "Predict temperatures fo selected Country\n************" << std::endl;
             predictData(candlesticks);
             break;
         case 8:
@@ -182,8 +182,8 @@ void Data::computeStats()
     averageTemperatureForEachCountry();
 }
 
-void Data::printAvailableCountries()
-{
+//void Data::printAvailableCountries()
+//{
 
     //std::cout << "\nAvailable countries:" << std::endl;
 
@@ -195,19 +195,40 @@ void Data::printAvailableCountries()
     //            }
 
      // Print the list of available countries
+//    std::cout << "\nAvailable countries:" << std::endl;
+//    int countryIndex = 1; // Start indexing from 1 for user-friendliness
+
+//    std::map<int, std::string> countryMap; // To map user input to country codes
+//    for (const auto& countryPair : candlesticks) {
+//        std::cout << countryIndex << ": " << countryPair.first << std::endl;
+//        countryMap[countryIndex] = countryPair.first;
+//        countryIndex++;
+//    }
+//}
+void Data::printAvailableCountries() {  // Add the Data:: prefix
+    
+    // Print the list of available countries
     std::cout << "\nAvailable countries:" << std::endl;
-    int countryIndex = 1; // Start indexing from 1 for user-friendliness
+    int countryIndex = 1; 
 
-    std::map<int, std::string> countryMap; // To map user input to country codes
-    for (const auto& countryPair : candlesticks) {
-        std::cout << countryIndex << ": " << countryPair.first << std::endl;
-        countryMap[countryIndex] = countryPair.first;
+    // Get the list of countries from the first data point
+    const std::map<std::string, double>& countries = data[0].countryTemperatures;
+    
+    // Print the countries in a table format with 5 columns
+    int columnCount = 0; 
+    for (const auto& countryPair : countries) {
+        //std::cout << countryIndex << ": " << countryPair.first << std::endl;
+        std::cout << std::setw(2) << std::left << countryIndex << ": " << std::setw(3) << std::left << countryPair.first << "| "; 
         countryIndex++;
+        columnCount++;
+        if(columnCount==5){
+            columnCount = 0;
+            std::cout << "\n----------------------------------------------" << std::endl;
+        }
     }
-
-
-
+    std::cout << "\n----------------------------------------------" << std::endl;
 }
+
 /* Compute the average temperature for each country */
 void Data::averageTemperatureForEachCountry() {
     std::cout << "===========================" << std::endl;
@@ -287,14 +308,14 @@ void Data::computeCandlesticks() {
     }
 }
 /* Get country input from the user. With input validation */
-std::string getCountry(const std::map<std::string, std::map<int, Candlestick>>& candlesticks){
+std::string Data::getCountry(const std::map<std::string, std::map<int, Candlestick>>& candlesticks){
+     
      // Print the list of available countries
-    std::cout << "\nAvailable countries:" << std::endl;
-    int countryIndex = 1; // Start indexing from 1 for user-friendliness
+    Data::printAvailableCountries();
 
+    int countryIndex = 1; // Start indexing from 1 for user-friendliness
     std::map<int, std::string> countryMap; // To map user input to country codes
     for (const auto& countryPair : candlesticks) {
-        std::cout << countryIndex << ": " << countryPair.first << std::endl;
         countryMap[countryIndex] = countryPair.first;
         countryIndex++;
     }
@@ -632,7 +653,7 @@ void Data::printFilteredAverageTemperatureData(const std::map<std::string, std::
 
 
     while(continueTheLoop){
-        std::string selectedCountry = getCountry(candlesticks);
+        std::string selectedCountry = Data::getCountry(candlesticks);
 
         std::cout << "***************************** " << std::endl; 
         std::cout << "Average temperatures between " << filteredData[0].startYear << " and " << filteredData[0].endYear<<std::endl; 
@@ -748,7 +769,7 @@ void Data::filterByCountry(const std::map<std::string, std::map<int, Candlestick
                 std::cout << std::setw(maxYearWidth) << "" << " "; // Use maxYearWidth for alignment
             }
         }
-        std::cout << std::setw(7) << std::setprecision(5) << tempValue << " | ";
+        std::cout << std::setw(7) << std::setprecision(4) << tempValue << " | ";
         std::cout << std::endl;
     }
 
@@ -779,6 +800,9 @@ void Data::predictData(const std::map<std::string, std::map<int, Candlestick>>& 
     4. Average all. Simple average the predicted temperature from the previous models
     */
 
+    // Get the selected country from the user
+    std::string selectedCountry = getCountry(candlesticks);
+
     int columnWidth=12;
 
     int firstYear = data.front().year;  // Get the first year in the entire dataset
@@ -788,9 +812,6 @@ void Data::predictData(const std::map<std::string, std::map<int, Candlestick>>& 
     int endYear = lastYear;
 
     computeYearlyAverageTemperatures(); // Average temperatures for all countries
-
-    // Get the selected country from the user
-    std::string selectedCountry = getCountry(candlesticks);
 
     std::vector<PredictTemperatureData> temperaturePrediction; // Use the class PredictTemperatureData
 
@@ -818,9 +839,9 @@ void Data::predictData(const std::map<std::string, std::map<int, Candlestick>>& 
 
     for (auto& item : filteredData) {
         if (item.year == firstYear && isFirstYear) {  //First year
-            temperatureDifference = item.temperature;
-            taylorTemperatureDifference = item.temperature;
-            secondPreviousTemperature = item.temperature;
+            temperatureDifference = 0.0;
+            taylorTemperatureDifference = 0.0;
+            secondPreviousTemperature = 0.0;
             isFirstYear = false; // Reset the flag after processing the first year
         } else if (isSecondYear) { // Check for the second year
             temperatureDifference = item.temperature - filteredData.front().temperature;
