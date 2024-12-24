@@ -2,18 +2,19 @@
 
 #include<string>
 #include<vector>
+#include <functional>
 
 #include "TemperatureData.h"
 #include "Candlestick.h"
 #include "FilteredData.h"
-#include "TemperatureDifferenceData.h"
+#include "PredictTemperatureData.h"
 
 class Data
 {
     public:
         Data() = default;
         void init();
-         void computeStats();
+        void computeStats();
     private:
         void loadData();
         std::vector<TemperatureData> data;
@@ -39,10 +40,19 @@ class Data
         void printFilteredAverageTemperatureData(const std::map<std::string, std::map<int, Candlestick>>& candlesticks);
         void filterByCountry(const std::map<std::string, std::map<int, Candlestick>>& candlesticks); // Function to filter data by country
         void predictData(const std::map<std::string, std::map<int, Candlestick>>& candlesticks); // Function to predict temperatures
+        void printPrediction(const std::vector<PredictTemperatureData>& tempPrediction, int columnWidth); // Print prediction values
+        void printPredictionBarChart(const std::vector<PredictTemperatureData>& tempPrediction); // Print prediction in Bar chart
+        void printBarChart(const std::vector<PredictTemperatureData>& data, //Helper function
+                    const std::string& label, 
+                    double yAxisHigh, double yAxisLow, double yAxisStep, 
+                    int chartHeight, int maxYearWidth,
+                    std::function<double(const PredictTemperatureData&)> valueGetter);
+
 
         std::map<int, double> yearlyAverageTemperatures;
         void computeYearlyAverageTemperatures();
-        std::vector<TemperatureDifferenceData> tempDiffData; 
+        
+        //std::vector<PredictTemperatureData> tempDiffData; 
 
 
         // ANSI color codes (you can add more as needed)

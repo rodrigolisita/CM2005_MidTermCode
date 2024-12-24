@@ -4,13 +4,12 @@
 #include <algorithm>
 #include <numeric> // For std::accumulate 
 #include <iomanip> // For std::setw and std::setfill
+#include <map>      // Include the map header
+#include <functional>
+#include <cmath>
 
 #include "Data.h"
 #include "tokenize.h"
-
-#include <map>      // Include the map header
-#include <functional>
-
 #include "ANSI_CODES.h" //For the color codes
 
 void Data::init()
@@ -102,6 +101,8 @@ void Data::loadData()
     std::string line;
     std::vector<std::string> tokens;
     std::vector<std::string> tokensTime;
+    std::vector<std::string> countryCodes = {"AT", "BE", "BG", "CH", "CZ", "DE", "DK", "EE", "ES", "FI", "FR", "GB", "GR", "HR", "HU", "IE", "IT", "LT", "LU", "LV", "NL", "NO", "PL", "PT", "RO", "SE", "SI", "SK"};
+
 
     int year;
     std::map<std::string, double> countryTemperatures;
@@ -123,10 +124,21 @@ void Data::loadData()
             
             try{
                 year = std::stoi(tokensTime[0]);
-                countryTemperatures["AT"] = std::stod(tokens[1]); 
-                countryTemperatures["BE"] = std::stod(tokens[2]); 
-                countryTemperatures["BG"] = std::stod(tokens[3]); 
-                countryTemperatures["CH"] = std::stod(tokens[4]);
+                
+                // Loop through the columns (starting from the second column, index 1)
+                for (size_t i = 1; i <= 28; ++i) {
+                    try {
+                        countryTemperatures[countryCodes[i - 1]] = std::stod(tokens[i]);
+                    } catch (const std::exception& e) {
+                        std::cerr << "Error parsing temperature value: " << e.what() << std::endl;
+                        // Handle the error appropriately (e.g., skip the row, use a default value)
+                    }
+                }
+                
+//                countryTemperatures["AT"] = std::stod(tokens[1]); 
+//                countryTemperatures["BE"] = std::stod(tokens[2]); 
+//                countryTemperatures["BG"] = std::stod(tokens[3]); 
+//                countryTemperatures["CH"] = std::stod(tokens[4]);
                 data.push_back(TemperatureData{
                                                 tokens[0],
                                                 year,
@@ -199,6 +211,10 @@ void Data::averageTemperatureForEachCountry() {
 void Data::computeCandlesticks() {
     
     //std::map<std::string, std::map<int, Candlestick>> candlesticks; // Country -> Year -> Candlestick
+
+    std::cout << "*************************************" <<std::endl;
+    std::cout << "Reading candlestick data ..." << std::endl;
+    std::cout << "*************************************" <<std::endl;
     
     // Get the list of countries from the first data point
     const std::map<std::string, double>& countries = data[0].countryTemperatures; 
@@ -602,7 +618,9 @@ void Data::filterByDateRange(const std::map<std::string, std::map<int, Candlesti
 
 void Data::printFilteredAverageTemperatureData(const std::map<std::string, std::map<int, Candlestick>>& candlesticks) {                                    
 
+
     Data::filterByDateRange(candlesticks);
+
 
     // Group data by country
     std::map<std::string, std::vector<FilteredData>> countryData;
@@ -622,6 +640,9 @@ void Data::printFilteredAverageTemperatureData(const std::map<std::string, std::
     }
 
     // Print
+    std::cout << "***************************** " << std::endl; 
+    std::cout << "Average temperatures between " << filteredData[0].startYear << " and " << filteredData[0].endYear<<std::endl; 
+    std::cout << "***************************** " << std::endl; 
     for (const auto& countryPair : countryData) {
         std::cout << "\nCountry: " << countryPair.first << std::endl;
         std::cout << std::setw(4) << std::left << "Year" << ": " 
@@ -688,14 +709,18 @@ void Data::filterByCountry(const std::map<std::string, std::map<int, Candlestick
         maxYearWidth = std::max(maxYearWidth, static_cast<int>(ss.str().length()));
     }
 
+    // Print
+    std::cout << "***************************** " << std::endl; 
+    std::cout << "Average temperature bar chart for " << selectedCountry << std::endl; 
+    std::cout << "***************************** " << std::endl; 
+
     // Print the y-axis values
-    for (int i = chartHeight; i >= 0; --i) {
-        double tempValue = yAxisHigh - i * yAxisStep;
-        std::cout << std::setw(7) << std::setprecision(5) << tempValue << " | ";
+    for (int i = chartHeight; i >= 0; --i) { 
+        double tempValue = yAxisLow + i * yAxisStep; 
+        std::cout << std::setw(7) << std::setprecision(4) << tempValue << " | ";
 
         for (const auto& item : filteredData) {
-            //if (item.temperature >= tempValue - yAxisStep && item.temperature <= tempValue) {
-            if (item.temperature <= tempValue) {
+            if (item.temperature >= tempValue) {
                 std::cout << std::setw(maxYearWidth) << "#" << " "; // Use maxYearWidth for alignment
             } else {
                 std::cout << std::setw(maxYearWidth) << "" << " "; // Use maxYearWidth for alignment
@@ -706,7 +731,13 @@ void Data::filterByCountry(const std::map<std::string, std::map<int, Candlestick
     }
 
     // Print the x-axis (years)
-    //std::cout << std::setw(7) << std::setprecision(5) << "Year" << " | ";
+    std::cout << std::setw(7) << "-----" << " | ";
+    for (const auto& item : filteredData) {
+    std::cout << std::setw(maxYearWidth) << "-----"; // Use maxYearWidth for alignment
+    }
+    std::cout << std::setw(7) << "-----" << " | ";
+    std::cout << std::endl;
+
     std::cout << std::setw(7) << "Year" << " | ";
     for (const auto& item : filteredData) {
         std::cout << std::setw(maxYearWidth) << item.year << " "; // Use maxYearWidth for alignment
@@ -719,8 +750,8 @@ void Data::predictData(const std::map<std::string, std::map<int, Candlestick>>& 
 {
     int columnWidth=12;
 
-    int firstYear = data.front().year; // Get the first year in the entire dataset
-    int lastYear = data.back().year; // Get the first year in the entire dataset
+    int firstYear = data.front().year;  // Get the first year in the entire dataset
+    int lastYear = data.back().year;    // Get the first year in the entire dataset
 
     int startYear = firstYear;
     int endYear = lastYear;
@@ -730,7 +761,7 @@ void Data::predictData(const std::map<std::string, std::map<int, Candlestick>>& 
     // Get the selected country from the user
     std::string selectedCountry = getCountry(candlesticks);
 
-    std::vector<TemperatureDifferenceData> tempDiffData; // Use the classTemperatureDifferenceData
+    std::vector<PredictTemperatureData> temperaturePrediction; // Use the class PredictTemperatureData
 
     filteredData.clear();
 
@@ -757,17 +788,19 @@ void Data::predictData(const std::map<std::string, std::map<int, Candlestick>>& 
     for (auto& item : filteredData) {
         if (item.year == firstYear && isFirstYear) {  //First year
             temperatureDifference = item.temperature;
+            taylorTemperatureDifference = item.temperature;
             secondPreviousTemperature = item.temperature;
             isFirstYear = false; // Reset the flag after processing the first year
         } else if (isSecondYear) { // Check for the second year
             temperatureDifference = item.temperature - filteredData.front().temperature;
+            taylorTemperatureDifference = item.temperature - filteredData.front().temperature;
             secondPreviousTemperature = item.temperature;
             isSecondYear = false; // Reset the flag after processing the second year
         } else {
             temperatureDifference = item.temperature - previousTemperature;
-            taylorTemperatureDifference = item.temperature - 2.0*previousTemperature + secondPreviousTemperature;
+            taylorTemperatureDifference = item.temperature -2.0*previousTemperature + secondPreviousTemperature;
         }
-        tempDiffData.push_back(TemperatureDifferenceData{item.year, item.country, item.temperature, 
+       temperaturePrediction.push_back(PredictTemperatureData{item.year, item.country, item.temperature, 
                                                          item.startYear, item.endYear, 
                                                          item.temperature,       //next
                                                          temperatureDifference, //backward
@@ -779,24 +812,30 @@ void Data::predictData(const std::map<std::string, std::map<int, Candlestick>>& 
     }
 
     // Compute the prediction temperatures
-    for (auto& item : tempDiffData) {
-        //item.euDifference = item.temperature - item.euDifference;
+    for (auto& item : temperaturePrediction) {
         item.euDifference = item.temperature + item.euDifference;
+        item.taylorPrediction = item.temperature + item.backwardDifference + 0.5*item.taylorPrediction;
         item.backwardDifference = item.temperature + item.backwardDifference;
-        item.taylorPrediction = item.temperature + item.taylorPrediction;
         item.averageALL = (item.temperature + item.euDifference + item.backwardDifference + item.taylorPrediction)*0.25;
     }
 
     // Correct next temperature value
-    for (auto it = tempDiffData.begin(); it != tempDiffData.end(); ++it) {
+    for (auto it = temperaturePrediction.begin(); it != temperaturePrediction.end(); ++it) {
         auto& item = *it; // Get the current item
         double nextTemp = item.temperature;
-        if (std::next(it) != tempDiffData.end()) { // Check if there is a next item
+        if (std::next(it) != temperaturePrediction.end()) { // Check if there is a next item
             nextTemp = std::next(it)->temperature;
         }
         item.nextTemperature = nextTemp;
      }
-   
+
+     // Print the results
+    printPrediction(temperaturePrediction, columnWidth); 
+    printPredictionBarChart(temperaturePrediction); 
+
+}
+
+void Data::printPrediction(const std::vector<PredictTemperatureData>& tempPrediction, int columnWidth) {
     // Print the temperatures and differences
     std::cout << std::left << std::setw(5) << "Year" << "|";
     std::cout << std::left << std::setw(columnWidth) << "Temperature" << "|";
@@ -808,41 +847,126 @@ void Data::predictData(const std::map<std::string, std::map<int, Candlestick>>& 
     std::cout << std::left << std::setw(columnWidth) << "ERR %" << "|";
     std::cout << std::left << std::setw(columnWidth) << "Average" << " ";
     std::cout << std::left << std::setw(columnWidth) << "ERR %" << "|";
-//    //std::cout << std::left << std::setw(headerWidths[3]) << "centralDif" << " ";
     std::cout << std::left << std::setw(columnWidth) << "Actual" << std::endl;
-    for (const auto& item : tempDiffData) {
+    for (const auto& item : tempPrediction) {
         double nextTemp = item.nextTemperature;
         double currentTemperature = item.temperature;
         double backPrediction = item.backwardDifference;
         double EUPrediction = item.euDifference;
         double taylorPrediction = item.taylorPrediction;
         double averagePrediction = item.averageALL;
-        
+
         std::cout << std::left << std::setw(5) << item.year << "|";
 
-        double err1 = Data::error(nextTemp,backPrediction);
-        double err2 = Data::error(nextTemp,EUPrediction);
-        double err3 = Data::error(nextTemp,taylorPrediction);
-        double err4 = Data::error(nextTemp,averagePrediction);
+        double err1 = Data::error(nextTemp, backPrediction);
+        double err2 = Data::error(nextTemp, EUPrediction);
+        double err3 = Data::error(nextTemp, taylorPrediction);
+        double err4 = Data::error(nextTemp, averagePrediction);
 
-        std::cout << std::left << std::setw(columnWidth) << currentTemperature << "|";
-        std::cout << std::left << std::setw(columnWidth) <<  backPrediction << " ";
-        std::cout << std::left << std::setw(columnWidth) <<  err1 << "|";
-        std::cout << std::left << std::setw(columnWidth) << EUPrediction << " ";
-        std::cout << std::left << std::setw(columnWidth) <<  err2 << "|";
-        std::cout << std::left << std::setw(columnWidth) << taylorPrediction << " ";
-        std::cout << std::left << std::setw(columnWidth) <<  err3 << "|";
-        std::cout << std::left << std::setw(columnWidth) << averagePrediction << " ";
-        std::cout << std::left << std::setw(columnWidth) <<  err4 << "|";
-//        //std::cout << std::left << std::setw(headerWidths[4]) << filteredData[i].temperature + centralDifferences[i] << " ";
+        std::cout << std::left << std::setw(columnWidth) << std::setprecision(5) << currentTemperature << "|";
+        std::cout << std::left << std::setw(columnWidth) << std::setprecision(5) << backPrediction << " ";
+        std::cout << std::left << std::setw(columnWidth) << std::setprecision(3) << err1 << "|";
+        std::cout << std::left << std::setw(columnWidth) << std::setprecision(5) << EUPrediction << " ";
+        std::cout << std::left << std::setw(columnWidth) << std::setprecision(3) << err2 << "|";
+        std::cout << std::left << std::setw(columnWidth) << std::setprecision(5) << taylorPrediction << " ";
+        std::cout << std::left << std::setw(columnWidth) << std::setprecision(2) << err3 << "|";
+        std::cout << std::left << std::setw(columnWidth) << std::setprecision(5) << averagePrediction << " ";
+        std::cout << std::left << std::setw(columnWidth) << std::setprecision(3) << err4 << "|";
 
         std::cout << std::left << std::setw(columnWidth) << nextTemp << "|";
         std::cout << std::endl;
     }
+}
 
+void Data::printPredictionBarChart(const std::vector<PredictTemperatureData>& tempDiffData) {
+    
+    // --- Bar charts for predictions ---
 
+    // Set chart parameters
+    int chartHeight = 20; 
+    int maxYearWidth = 0;
+    for (const auto& item : tempDiffData) {
+        std::stringstream ss;
+        ss << item.year;
+        maxYearWidth = std::max(maxYearWidth, static_cast<int>(ss.str().length()));
+    }
+    
+    // --- Print the bar charts ---
 
+    // Backward Difference
+    printBarChart(tempDiffData, "Backward Difference Error [%]", 100.0, 0.0, 5.0, chartHeight, maxYearWidth, 
+              [&](const PredictTemperatureData& item) { 
+                  return Data::error(item.nextTemperature, item.backwardDifference); // Absolute error
+              });
 
+    // EU Difference
+    printBarChart(tempDiffData, "EU Difference Error [%]", 100.0, 0.0, 5.0, chartHeight, maxYearWidth, 
+              [&](const PredictTemperatureData& item) { 
+                  return Data::error(item.nextTemperature, item.euDifference); // Absolute error
+              });
+
+    // Taylor Prediction
+    printBarChart(tempDiffData, "Taylor Prediction Error [%]", 100.0, 0.0, 5.0, chartHeight, maxYearWidth, 
+              [&](const PredictTemperatureData& item) { 
+                  return Data::error(item.nextTemperature, item.taylorPrediction); // Absolute error
+              });
+
+    // Average ALL
+    printBarChart(tempDiffData, "Average ALL Prediction Error [%]", 100.0, 0.0, 5.0, chartHeight, maxYearWidth, 
+              [&](const PredictTemperatureData& item) { 
+                  return Data::error(item.nextTemperature, item.averageALL); // Absolute error
+              }); 
+    
+    
+}
+
+// Helper function to print a bar chart
+void Data::printBarChart(const std::vector<PredictTemperatureData>& data, 
+                        const std::string& label, 
+                        double yAxisHigh, double yAxisLow, double yAxisStep, 
+                        int chartHeight, int maxYearWidth,
+                        std::function<double(const PredictTemperatureData&)> valueGetter) {
+
+    std::cout << "\n" << label << " bar chart:" << std::endl;
+    std::cout << "red:  predicted temperature above actual temperature" << std::endl;
+    std::cout << "blue: predicted temperature below actual temperature" << std::endl;
+    for (const auto& item : data) {
+        std::cout << std::setw(maxYearWidth) << "-----"; 
+    }
+    std::cout << std::endl;
+
+    // Print the y-axis values
+    for (int i = chartHeight; i >= 0; --i) {
+        double tempValue = yAxisLow + i * yAxisStep;
+        std::cout << std::setw(7) << std::setprecision(3) << tempValue << " | ";
+        for (const auto& item : data) {
+            double value = valueGetter(item); // Get the error value using the provided function
+            std::string colorOption = (value > 0) ? colorRed : colorBlue;
+
+            value = std::abs(value);
+            
+            if (value >= tempValue) {
+                std::cout << colorOption << std::setw(maxYearWidth) << "#" << colorReset << " "; 
+            } else {
+                std::cout << std::setw(maxYearWidth) << "" << " "; 
+            }
+        }
+        std::cout << std::setw(7) << std::setprecision(5) << tempValue << " | ";
+        std::cout << std::endl;
+    }
+
+    // Print the x-axis (years)
+    std::cout << std::setw(7) << "-----" << " | ";
+    for (const auto& item : data) {
+        std::cout << std::setw(maxYearWidth) << "-----"; 
+    }
+    std::cout << std::setw(7) << "-----" << " | ";
+    std::cout << std::endl;
+    std::cout << std::setw(7) << "Year" << " | ";
+    for (const auto& item : data) {
+        std::cout << std::setw(maxYearWidth) << item.year << " "; 
+    }
+    std::cout << std::endl;
 }
 
 double Data::error (double x1, double x2){
