@@ -1,3 +1,4 @@
+// Data.cpp
 #include <iostream>
 #include <fstream>
 #include <sstream> // For std::stringstream
@@ -18,7 +19,6 @@ void Data::init()
     std::cout << "Hello from Weather data EU 1980-2019" << std::endl;
     loadData();
     computeCandlesticks();
-    //printMenu();
     
     int input;
     while(true)
@@ -138,14 +138,9 @@ void Data::loadData()
                         countryTemperatures[countryCodes[i - 1]] = std::stod(tokens[i]);
                     } catch (const std::exception& e) {
                         std::cerr << "Error parsing temperature value: " << e.what() << std::endl;
-                        // Handle the error appropriately (e.g., skip the row, use a default value)
                     }
                 }
-                
-//                countryTemperatures["AT"] = std::stod(tokens[1]); 
-//                countryTemperatures["BE"] = std::stod(tokens[2]); 
-//                countryTemperatures["BG"] = std::stod(tokens[3]); 
-//                countryTemperatures["CH"] = std::stod(tokens[4]);
+              
                 data.push_back(TemperatureData{
                                                 tokens[0],
                                                 year,
@@ -178,37 +173,16 @@ void Data::computeStats()
     std::cout << "Statistics from the data." << std::endl;
     std::cout << "===========================" << std::endl;
 
-    //printData();
     averageTemperatureForEachCountry();
 }
 
-//void Data::printAvailableCountries()
-//{
-
-    //std::cout << "\nAvailable countries:" << std::endl;
-
-                // Get the list of countries from the first data point
-    //            const std::map<std::string, double>& countries = data[0].countryTemperatures;
-
-    //            for (const auto& countryPair : countries) {
-    //                std::cout << "- " << countryPair.first << std::endl;
-    //            }
-
-     // Print the list of available countries
-//    std::cout << "\nAvailable countries:" << std::endl;
-//    int countryIndex = 1; // Start indexing from 1 for user-friendliness
-
-//    std::map<int, std::string> countryMap; // To map user input to country codes
-//    for (const auto& countryPair : candlesticks) {
-//        std::cout << countryIndex << ": " << countryPair.first << std::endl;
-//        countryMap[countryIndex] = countryPair.first;
-//        countryIndex++;
-//    }
-//}
+/* Print the available countries to console in a table format */
 void Data::printAvailableCountries() {  // Add the Data:: prefix
     
     // Print the list of available countries
     std::cout << "\nAvailable countries:" << std::endl;
+    std::cout << "\n----------------------------------------------" << std::endl;
+    
     int countryIndex = 1; 
 
     // Get the list of countries from the first data point
@@ -502,21 +476,13 @@ void Data::printCandlestickChart(const std::map<std::string, std::map<int, Candl
             double high = candle.high; // Get the high value
             double low = candle.low; // Get the low value
 
-            //colorOption = colorRed; // Choose the color you want to use
             // Set colorOption based on open/close comparison
             colorOption = (candle.close > candle.open) ? colorGreen : colorRed;
 
-
-
             if (open <= tempValue && open > tempValueL) {
-            // Print "U" or "D" if open value falls within the current row's range
-                //std::cout << colorOption << std::setw(maxColumnWidth) << std::left << (open > close ? "O" : "O") << " " << colorReset; 
                 std::cout << colorOption << std::setw(maxColumnWidth) << std::left << "O" << " " << colorReset; 
             } else if (close >= tempValueL && close < tempValue) {
-            // Print "U" or "D" if close value falls within the current row's range
-                //std::cout << colorOption << std::setw(maxColumnWidth) << std::left << (open > close ? "C" : "C") << " " << colorReset; 
                 std::cout << colorOption << std::setw(maxColumnWidth) << std::left << "C" << " " << colorReset; 
-            //    std::cout << std::setw(maxColumnWidth) << std::left << realBodyLow << " ";
             }else if (high >= tempValue && realBodyHigh < tempValue) { 
                 // Print "|" if high value falls within the current row's range
                 std::cout << colorOption << std::setw(maxColumnWidth) << std::left << "|" << " " << colorReset; 
@@ -547,8 +513,6 @@ void Data::printCandlestickChart(const std::map<std::string, std::map<int, Candl
         std::cout << std::setw(maxColumnWidth) << std::left << year << " ";
     }
     std::cout << std::endl;
-
-   
 }
 /* Ask the user to input the year range. Also contains input validation*/
 std::pair<int, int> Data::getDateRangeFromUser() {
@@ -581,10 +545,8 @@ std::pair<int, int> Data::getDateRangeFromUser() {
             std::cout << "Invalid input. Please enter a number." << std::endl;
             std::cin.clear();
             std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-        } else if (endYear < minYear || endYear > maxYear) {
-            std::cout << "Invalid year. Please enter a year between " << minYear << " and " << maxYear << "." << std::endl;
-        } else if (endYear < startYear) {
-            std::cout << "Invalid range: Ending year cannot be less than starting year." << std::endl;
+        } else if (endYear < startYear || endYear > maxYear) {
+            std::cout << "Invalid year. Please enter a year between " << startYear << " and " << maxYear << "." << std::endl;
         }
     } while (std::cin.fail() || endYear < minYear || endYear > maxYear || endYear < startYear);
 
@@ -619,14 +581,11 @@ void Data::filterByDateRange(const std::map<std::string, std::map<int, Candlesti
  
     filterData(startYear, endYear, candlesticks); // Call filterData to populate filteredData
 
-
 }
 /* Filter data by year range */
 void Data::printFilteredAverageTemperatureData(const std::map<std::string, std::map<int, Candlestick>>& candlesticks) {                                    
 
-
     Data::filterByDateRange(candlesticks);
-
 
     // Group data by country
     std::map<std::string, std::vector<FilteredData>> countryData;
@@ -647,10 +606,8 @@ void Data::printFilteredAverageTemperatureData(const std::map<std::string, std::
 
     // Print
     // Get the selected country from the user
-    
 
     bool continueTheLoop = true;
-
 
     while(continueTheLoop){
         std::string selectedCountry = Data::getCountry(candlesticks);
@@ -678,7 +635,7 @@ void Data::printFilteredAverageTemperatureData(const std::map<std::string, std::
         continueTheLoop = Data::wantToContinue("Want to select another country? ");
     }
 }
-/* Helper functio to ask the user to continue the loop */
+/* Helper function to ask the user to continue the loop */
 bool Data::wantToContinue(std::string message) {
     int userInput;
     bool userWantsToContinue = false;
@@ -711,7 +668,6 @@ void Data::filterByCountry(const std::map<std::string, std::map<int, Candlestick
     int startYear = data.front().year;
     int endYear = data.back().year;
     
-
     // Get the selectedCountry variable
     std::string selectedCountry = getCountry(candlesticks);
 
@@ -854,16 +810,16 @@ void Data::predictData(const std::map<std::string, std::map<int, Candlestick>>& 
         }
        temperaturePrediction.push_back(PredictTemperatureData{item.year, item.country, item.temperature, 
                                                          item.startYear, item.endYear, 
-                                                         item.temperature,       //next
-                                                         temperatureDifference, //backward
-                                                         item.temperature - item.euAvTemp,         // EU
-                                                         taylorTemperatureDifference       // Taylor
+                                                         item.temperature,                  //next
+                                                         temperatureDifference,             //backward
+                                                         item.temperature - item.euAvTemp,  // EU
+                                                         taylorTemperatureDifference        // Taylor
                                                          });
         secondPreviousTemperature = previousTemperature;
         previousTemperature = item.temperature;
     }
 
-    // Compute the prediction temperatures
+    // Compute the predicted temperatures diferences
     for (auto& item : temperaturePrediction) {
         item.euDifference = item.temperature + item.euDifference;
         item.taylorPrediction = item.temperature + item.backwardDifference + 0.5*item.taylorPrediction;
@@ -1020,7 +976,7 @@ void Data::printBarChart(const std::vector<PredictTemperatureData>& data,
     std::cout << std::endl;
 }
 
-/* Return absolute percentual error*/
+/* Return relative percentual error*/
 double Data::error (double x1, double x2){
     double err = 100*(x1-x2)/x1;
     return err;

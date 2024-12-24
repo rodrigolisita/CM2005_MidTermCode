@@ -10,7 +10,7 @@ PredictTemperatureData::PredictTemperatureData(int _year,
                                                double _backwardDifference,
                                                double _euDifference,
                                                double _taylorPrediction,
-                                               double _averageALL)  // No default value here
+                                               double _averageALL)
     : year(_year),
       country(_country),
       temperature(_temperature),
