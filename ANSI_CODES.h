@@ -9,4 +9,3 @@
 #define colorGreen "\033[32m"
 #define colorBlue "\033[34m"
 #define colorReset "\033[0m"
-

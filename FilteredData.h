@@ -18,7 +18,7 @@ class FilteredData
     int year;
     std::string country;
     double temperature;
-    int startYear; // Add startYear
-    int endYear;   // Add endYear
+    int startYear; 
+    int endYear;
     double euAvTemp;
 };
